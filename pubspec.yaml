@@ -1,0 +1,58 @@
+name: konta_app
+description: "App de gestão financeira pessoal Konta."
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.8
+
+
+dependencies:
+  flutter:
+    sdk: flutter
+  intl: ^0.20.2
+  provider: ^6.1.5+1
+  http: ^1.6.0
+  flutter_dotenv: ^5.1.0
+  fl_chart: ^1.0.0
+
+# Para fazer requisições HTTP (GET, POST) na API
+dio: ^5.4.0
+
+# Para gerar e formatar datas
+intl: ^0.19.0
+
+# Gerenciamento de estado e injeção de dependência simples
+# (Evita código espaguete sem complicar demais agora)
+provider: ^6.1.1
+
+# Ícones modernos (opcional, mas ajuda na UI)
+lucide_icons: ^0.2.0
+
+# Gráficos para o Dashboard
+fl_chart: ^0.66.0
+
+# Para armazenar o token de login de forma segura no celular
+flutter_secure_storage: ^9.0.0
+
+# Para lidar com UUIDs (identificadores únicos)
+uuid: ^4.3.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - .env
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/images/logo_konta.png" # <--- CAMINHO DA LOGO
+  min_sdk_android: 21 # Opcional, mas bom para compatibilidade
+  # remove_alpha_ios: true # se a logo tiver transparência e der erro no iOS
