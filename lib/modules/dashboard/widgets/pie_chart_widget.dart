@@ -1,5 +1,5 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:konta_app/core/theme/app_theme.dart';
 import 'package:konta_app/data/models/dashboard_model.dart';
 
@@ -17,113 +17,127 @@ class _PieChartWidgetState extends State<PieChartWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Se não tiver dados ou tudo for zero, mostra mensagem
-    if (widget.dados.isEmpty || widget.dados.every((e) => e.value == 0)) {
-      return Container(
-        height: 200,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.borderDark),
-        ),
-        child: const Text("Sem dados para o gráfico", style: TextStyle(color: AppTheme.textSilver)),
-      );
-    }
+    final total = widget.dados.fold(0.0, (sum, item) => sum + item.value);
 
+    // Container mais limpo, sem borda pesada
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 30),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.borderDark),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 15, offset: const Offset(0, 5)),
-        ],
+        // Cor de fundo ligeiramente mais clara que o background principal para destacar suavemente
+        color: AppTheme.surface.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(28),
+        // Sem border: Border.all(...) aqui
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text("Distribuição de Gastos", style: TextStyle(color: AppTheme.textWhite, fontSize: 16, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 200,
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: PieChart(
-                    PieChartData(
-                      pieTouchData: PieTouchData(
-                        touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                          setState(() {
-                            if (!event.isInterestedForInteractions || pieTouchResponse == null || pieTouchResponse.touchedSection == null) {
-                              touchedIndex = -1;
-                              return;
-                            }
-                            touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                          });
-                        },
-                      ),
-                      borderData: FlBorderData(show: false),
-                      sectionsSpace: 4, // Espaço entre as fatias
-                      centerSpaceRadius: 40, // Donut Chart
-                      sections: List.generate(widget.dados.length, (i) {
-                        final isTouched = i == touchedIndex;
-                        final fontSize = isTouched ? 16.0 : 12.0;
-                        final radius = isTouched ? 60.0 : 50.0;
-                        final item = widget.dados[i];
-                        
-                        return PieChartSectionData(
-                          color: _hexToColor(item.colorHex),
-                          value: item.value,
-                          title: '${item.value.toInt()}%',
-                          radius: radius,
-                          titleStyle: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold, color: Colors.white),
-                        );
-                      }),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 24),
-                // Legenda
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: widget.dados.map((e) => _buildLegendItem(e)).toList(),
-                  ),
-                ),
-              ],
+          const Text(
+            'Distribuição de Gastos',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textWhite,
+              letterSpacing: 0.5,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLegendItem(GraficoData item) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Container(
-            width: 12, height: 12,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: _hexToColor(item.colorHex)),
+          const SizedBox(height: 30),
+          Row(
+            children: [
+              // Gráfico
+              SizedBox(
+                height: 150,
+                width: 150,
+                child: Stack(
+                  children: [
+                    PieChart(
+                      PieChartData(
+                        pieTouchData: PieTouchData(
+                          touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                            setState(() {
+                              if (!event.isInterestedForInteractions ||
+                                  pieTouchResponse == null ||
+                                  pieTouchResponse.touchedSection == null) {
+                                touchedIndex = -1;
+                                return;
+                              }
+                              touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                            });
+                          },
+                        ),
+                        borderData: FlBorderData(show: false),
+                        sectionsSpace: 2, // Pequeno espaço para modernidade
+                        centerSpaceRadius: 55,
+                        sections: _buildSections(),
+                      ),
+                    ),
+                    Center(
+                      child: Text(
+                        "Total",
+                        style: TextStyle(color: AppTheme.textSilver.withValues(alpha: 0.8), fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 30),
+              // Legenda Limpa
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: widget.dados.asMap().entries.map((entry) {
+                    final data = entry.value;
+                    final percentage = total == 0 ? 0.0 : (data.value / total * 100);
+                    
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(int.parse(data.colorHex.replaceFirst('#', '0xFF'))),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              data.name,
+                              style: const TextStyle(color: AppTheme.textSilver, fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            '${percentage.toInt()}%',
+                            style: const TextStyle(color: AppTheme.textWhite, fontSize: 13, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Text(item.name, style: const TextStyle(color: AppTheme.textSilver, fontSize: 12, fontWeight: FontWeight.w500)),
         ],
       ),
     );
   }
 
-  Color _hexToColor(String hex) {
-    hex = hex.replaceAll("#", "");
-    if (hex.length == 6) hex = "FF$hex";
-    return Color(int.parse("0x$hex"));
+  List<PieChartSectionData> _buildSections() {
+    return widget.dados.asMap().entries.map((entry) {
+      final index = entry.key;
+      final data = entry.value;
+      final isTouched = index == touchedIndex;
+      final radius = isTouched ? 58.0 : 50.0;
+
+      return PieChartSectionData(
+        color: Color(int.parse(data.colorHex.replaceFirst('#', '0xFF'))),
+        value: data.value,
+        title: '',
+        radius: radius,
+      );
+    }).toList();
   }
 }

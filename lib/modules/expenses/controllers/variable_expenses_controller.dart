@@ -140,8 +140,7 @@ class VariableExpensesController extends ChangeNotifier {
         }
       });
 
-      // Assumindo POST conforme padrão do seu backend (embora PUT seja o padrão REST)
-      final response = await http.post(url, headers: _headers(token), body: body);
+      final response = await http.patch(url, headers: _headers(token), body: body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         KontaSnack.show(context, title: "Sucesso", message: "Categoria atualizada!");

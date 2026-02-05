@@ -21,7 +21,7 @@ class KontaSnack {
         icon = Icons.check_circle_rounded;
         break;
       case KontaSnackType.error:
-        color = AppTheme.error; // Vermelho
+        color = AppTheme.neonRed; // Vermelho
         icon = Icons.error_rounded;
         break;
       case KontaSnackType.warning:
@@ -29,7 +29,7 @@ class KontaSnack {
         icon = Icons.warning_rounded;
         break;
       case KontaSnackType.info:
-        color = AppTheme.primary; // Azul Navy
+        color = AppTheme.primaryModern; 
         icon = Icons.info_rounded;
         break;
     }

@@ -4,12 +4,16 @@ import 'package:konta_app/core/theme/app_theme.dart';
 import 'package:konta_app/core/utils/formatters.dart';
 // Widgets Globais
 import 'package:konta_app/widgets/app_drawer.dart';
-import 'package:konta_app/widgets/finance_card.dart';
+import 'package:konta_app/modules/dashboard/widgets/finance_card.dart'; // Card Grande
+// Widgets do Dashboard
+import 'package:konta_app/modules/dashboard/widgets/DashboardHeader.dart';
+import 'package:konta_app/modules/dashboard/widgets/pie_chart_widget.dart';
+import 'package:konta_app/modules/dashboard/widgets/RecentTransactionsList.dart';
+import 'package:konta_app/modules/dashboard/widgets/finance_summary_card.dart'; // Novos Cards Pequenos
 // Módulos
 import 'package:konta_app/modules/auth/controllers/auth_provider.dart';
 import 'package:konta_app/modules/auth/login_page.dart';
 import 'package:konta_app/modules/dashboard/controllers/dashboard_controller.dart';
-import 'package:konta_app/modules/dashboard/widgets/pie_chart_widget.dart';
 import 'package:konta_app/modules/expenses/pages/variable_expenses_page.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -37,56 +41,51 @@ class _DashboardContentState extends State<_DashboardContent> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.user?.token != null) {
+        final now = DateTime.now();
         Provider.of<DashboardController>(context, listen: false)
-            .fetchDashboard(auth.user!.token!, mes: 1, ano: 2026);
+            .fetchDashboard(auth.user!.token!, mes: now.month, ano: now.year);
       }
     });
   }
 
-  // --- WIDGET DE BOTÃO NEON GLASS ---
-  Widget _buildHeaderButton({
+  // Botões de ação do Card Principal
+  Widget _buildActionButton({
     required IconData icon, 
     required String label, 
-    required Color color, // Cor do tema (Verde/Vermelho)
+    required Color color, 
     required VoidCallback onTap
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            // Fundo translúcido na cor do botão
-            color: color.withValues(alpha: 0.15), 
-            borderRadius: BorderRadius.circular(12),
-            // Borda fina e sólida na cor do botão
-            border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
-            // Brilho sutil
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              )
-            ]
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: Colors.white, size: 14),
-              const SizedBox(width: 6),
-              Text(
-                label, 
-                style: const TextStyle(
-                  color: Colors.white, 
-                  fontSize: 12, 
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5
-                )
+    return Expanded( 
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: color.withValues(alpha: 0.2)),
               ),
-            ],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: Colors.white, size: 15),
+                  const SizedBox(width: 8),
+                  Text(
+                    label, 
+                    style: const TextStyle(
+                      color: Colors.white, 
+                      fontSize: 13, 
+                      fontWeight: FontWeight.w600
+                    )
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -103,83 +102,78 @@ class _DashboardContentState extends State<_DashboardContent> {
       return const SizedBox();
     }
 
+    final resumo = dashController.data?.resumo;
+    final saldo = resumo?.saldoAtual ?? 0;
+    final receitas = resumo?.receitas ?? 0;
+    final despesas = resumo?.despesas ?? 0;
+    final graficos = dashController.data?.graficos ?? [];
+    final transacoes = dashController.data?.transacoes ?? [];
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       drawer: const AppDrawer(),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.textWhite),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Olá, ${user.nome.split(' ')[0]}', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.textWhite)),
-            Text('Resumo financeiro', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textSilver)),
-          ],
-        ),
-      ),
+      appBar: DashboardHeader(userName: user.nome),
+      
       body: dashController.isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               color: AppTheme.primaryModern,
               backgroundColor: AppTheme.surface,
               onRefresh: () async {
-                if (user.token != null) await dashController.fetchDashboard(user.token!, mes: 1, ano: 2026);
+                if (user.token != null) {
+                  final now = DateTime.now();
+                  await dashController.fetchDashboard(user.token!, mes: now.month, ano: now.year);
+                }
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                   const SizedBox(height: 20),
-                    // --- 1. CARD PRINCIPAL (SALDO) COM BOTÕES DESTAQUE ---
+                    const SizedBox(height: 10),
+                    
+                    // 1. CARD PRINCIPAL (SALDO)
                     FinanceCard(
                       title: 'Saldo Atual',
-                      value: Formatters.formatMoney(dashController.data?.resumo.saldoAtual ?? 0),
+                      value: Formatters.formatMoney(saldo),
                       icon: Icons.account_balance_wallet,
                       color: AppTheme.primaryModern,
                       isPrincipal: true,
                       actions: [
-                        // Botão Receita (Verde Neon)
-                        _buildHeaderButton(
+                        _buildActionButton(
                           icon: Icons.arrow_upward, 
                           label: "Receita", 
                           color: AppTheme.neonGreen,
-                          onTap: () {
-                             // Navegar para add receita
-                          }
+                          onTap: () { /* Navegar */ }
                         ),
-                        // Botão Despesa (Vermelho Neon)
-                        _buildHeaderButton(
+                        _buildActionButton(
                           icon: Icons.arrow_downward, 
                           label: "Despesa", 
                           color: AppTheme.neonRed,
-                          onTap: () {
-                             Navigator.of(context).push(MaterialPageRoute(builder: (_) => const VariableExpensesPage()));
-                          }
+                          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const VariableExpensesPage())),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24), // Espaçamento maior
 
-                    // --- 2. ENTRADAS E SAÍDAS ---
+                    // 2. NOVOS CARDS DE RESUMO
                     Row(
                       children: [
                         Expanded(
-                          child: FinanceCard(
+                          child: FinanceSummaryCard(
                             title: 'Entradas',
-                            value: Formatters.formatMoney(dashController.data?.resumo.receitas ?? 0),
+                            value: Formatters.formatMoney(receitas),
                             icon: Icons.arrow_upward_rounded,
                             color: AppTheme.neonGreen,
                           ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: FinanceCard(
+                          child: FinanceSummaryCard(
                             title: 'Saídas',
-                            value: Formatters.formatMoney(dashController.data?.resumo.despesas ?? 0),
+                            value: Formatters.formatMoney(despesas),
                             icon: Icons.arrow_downward_rounded,
                             color: AppTheme.neonRed,
                           ),
@@ -189,84 +183,25 @@ class _DashboardContentState extends State<_DashboardContent> {
 
                     const SizedBox(height: 32),
 
-                    // --- 3. GRÁFICO DE PIZZA ---
-                    if (dashController.data != null && dashController.data!.graficos.isNotEmpty)
-                      PieChartWidget(dados: dashController.data!.graficos)
-                    else 
-                      const Center(child: Text("Sem dados gráficos", style: TextStyle(color: AppTheme.textSilver))),
+                    // 3. GRÁFICO (Novo design limpo)
+                    if (graficos.isNotEmpty)
+                      PieChartWidget(dados: graficos),
 
                     const SizedBox(height: 32),
 
-                    // --- 4. LISTA DE TRANSAÇÕES ---
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text("Transações Recentes", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textWhite)),
-                          InkWell(
-                            onTap: (){},
-                            child: const Text("Ver todas", style: TextStyle(color: AppTheme.primaryModern, fontWeight: FontWeight.bold))
-                          ),
-                        ],
-                      ),
+                    // 4. LISTA DE TRANSAÇÕES (Novo design com ícones)
+                    RecentTransactionsList(
+                      transactions: transacoes,
+                      onViewAllTap: () {
+                        // Navegar para extrato
+                      },
                     ),
-                    const SizedBox(height: 16),
-
-                    if (dashController.data?.transacoes.isEmpty ?? true)
-                      const Padding(padding: EdgeInsets.all(16.0), child: Center(child: Text("Nenhuma transação recente.", style: TextStyle(color: AppTheme.textSilver))))
-                    else
-                      ...dashController.data!.transacoes.map((transacao) {
-                        return _buildTransactionItem(
-                          context,
-                          transacao.titulo,
-                          transacao.categoria,
-                          transacao.tipo == 'despesa' ? -transacao.valor : transacao.valor,
-                          transacao.tipo == 'receita' ? Icons.arrow_upward : Icons.shopping_bag_outlined,
-                        );
-                      }),
+                    
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
             ),
-    );
-  }
-
-  Widget _buildTransactionItem(BuildContext context, String title, String category, double value, IconData icon) {
-    final isNegative = value < 0;
-    final color = isNegative ? AppTheme.neonRed : AppTheme.neonGreen;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppTheme.inputDark, borderRadius: BorderRadius.circular(16)),
-                child: Icon(icon, color: AppTheme.textWhite, size: 20),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.textWhite)),
-                  const SizedBox(height: 4),
-                  Text(category, style: const TextStyle(color: AppTheme.textSilver, fontSize: 12)),
-                ],
-              ),
-            ],
-          ),
-          Text(Formatters.formatMoney(value), style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 15)),
-        ],
-      ),
     );
   }
 }
