@@ -31,15 +31,7 @@ class FinanceCard extends StatelessWidget {
         border: isPrincipal 
             ? Border.all(color: Colors.white.withValues(alpha: 0.1)) 
             : Border.all(color: AppTheme.borderDark),
-        boxShadow: [
-          BoxShadow(
-            color: isPrincipal 
-                ? AppTheme.primaryModern.withValues(alpha: 0.4) 
-                : Colors.black.withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

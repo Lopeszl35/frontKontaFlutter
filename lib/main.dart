@@ -4,11 +4,16 @@ import 'package:provider/provider.dart';
 import 'package:konta_app/core/theme/app_theme.dart';
 import 'package:konta_app/modules/auth/login_page.dart';
 import 'package:konta_app/modules/auth/controllers/auth_provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 // Transformamos o main em async para carregar configurações antes do app abrir
 void main() async {
   // 1. Garante que o motor do Flutter está pronto
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. Inicializa o motor de internacionalização
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('pt_BR', null);
 
   // 2. Tenta carregar o arquivo .env
   try {

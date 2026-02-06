@@ -23,7 +23,6 @@ dio: ^5.4.0
 intl: ^0.19.0
 
 # Gerenciamento de estado e injeção de dependência simples
-# (Evita código espaguete sem complicar demais agora)
 provider: ^6.1.1
 
 # Ícones modernos (opcional, mas ajuda na UI)

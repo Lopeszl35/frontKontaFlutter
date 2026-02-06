@@ -4,17 +4,20 @@ import 'package:konta_app/core/theme/app_theme.dart';
 import 'package:konta_app/core/utils/formatters.dart';
 // Widgets Globais
 import 'package:konta_app/widgets/app_drawer.dart';
-import 'package:konta_app/modules/dashboard/widgets/finance_card.dart'; // Card Grande
+import 'package:konta_app/modules/dashboard/widgets/finance_card.dart';
 // Widgets do Dashboard
 import 'package:konta_app/modules/dashboard/widgets/DashboardHeader.dart';
 import 'package:konta_app/modules/dashboard/widgets/pie_chart_widget.dart';
 import 'package:konta_app/modules/dashboard/widgets/RecentTransactionsList.dart';
-import 'package:konta_app/modules/dashboard/widgets/finance_summary_card.dart'; // Novos Cards Pequenos
+import 'package:konta_app/modules/dashboard/widgets/finance_summary_card.dart'; 
 // Módulos
 import 'package:konta_app/modules/auth/controllers/auth_provider.dart';
 import 'package:konta_app/modules/auth/login_page.dart';
 import 'package:konta_app/modules/dashboard/controllers/dashboard_controller.dart';
 import 'package:konta_app/modules/expenses/pages/variable_expenses_page.dart';
+
+// Botões de ação do Card Principal
+import 'package:konta_app/modules/dashboard/widgets/DashboardActionButton.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -46,50 +49,6 @@ class _DashboardContentState extends State<_DashboardContent> {
             .fetchDashboard(auth.user!.token!, mes: now.month, ano: now.year);
       }
     });
-  }
-
-  // Botões de ação do Card Principal
-  Widget _buildActionButton({
-    required IconData icon, 
-    required String label, 
-    required Color color, 
-    required VoidCallback onTap
-  }) {
-    return Expanded( 
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: color.withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, color: Colors.white, size: 15),
-                  const SizedBox(width: 8),
-                  Text(
-                    label, 
-                    style: const TextStyle(
-                      color: Colors.white, 
-                      fontSize: 13, 
-                      fontWeight: FontWeight.w600
-                    )
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -140,14 +99,16 @@ class _DashboardContentState extends State<_DashboardContent> {
                       icon: Icons.account_balance_wallet,
                       color: AppTheme.primaryModern,
                       isPrincipal: true,
-                      actions: [
-                        _buildActionButton(
+                     actions: [
+                        DashboardActionButton(
                           icon: Icons.arrow_upward, 
                           label: "Receita", 
                           color: AppTheme.neonGreen,
                           onTap: () { /* Navegar */ }
                         ),
-                        _buildActionButton(
+                        // Espaçador se necessário, mas o Expanded já cuida disso
+                        const SizedBox(width: 8), 
+                        DashboardActionButton(
                           icon: Icons.arrow_downward, 
                           label: "Despesa", 
                           color: AppTheme.neonRed,
