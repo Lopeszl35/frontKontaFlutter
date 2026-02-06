@@ -159,7 +159,7 @@ class ExpensesGrid extends StatelessWidget {
                         color: AppTheme.primaryModern,
                         borderRadius: BorderRadius.only(bottomRight: Radius.circular(24)),
                       ),
-                      child: const Center(child: Icon(Icons.add, size: 22, color: Colors.white)),
+                      child: const Center(child: Icon(Icons.attach_money, size: 22, color: Colors.white)),
                     ),
                   ),
                 ),
