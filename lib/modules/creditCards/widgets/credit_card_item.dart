@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:konta_app/core/theme/app_theme.dart';
-import 'package:konta_app/modules/creditCards/pages/credit_cards_screen.dart'; 
+// IMPORT CORRETO DO MODELO (Removemos o import da screen)
+import 'package:konta_app/data/models/credit_card_model.dart'; 
 
 const Map<String, String> brandLogos = {
   'visa': 'VISA',
@@ -12,7 +13,7 @@ const Map<String, String> brandLogos = {
 };
 
 class CreditCardItemWidget extends StatelessWidget {
-  final CreditCard card;
+  final CreditCardModel card;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -26,7 +27,8 @@ class CreditCardItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
-    final usage = card.usagePercent;
+    // Se o modelo básico não tiver usagePercent, calculamos aqui ou assumimos 0
+    final usage = card.usagePercent; 
 
     Color progressColor;
     if (usage > 90) {
@@ -41,7 +43,7 @@ class CreditCardItemWidget extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 230, // <--- CORREÇÃO AQUI: Altura fixa define o limite para o Spacer funcionar
+        height: 230,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -87,7 +89,7 @@ class CreditCardItemWidget extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header: Nome e Bandeira
+                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -96,7 +98,7 @@ class CreditCardItemWidget extends StatelessWidget {
                           Icon(Icons.credit_card, color: Colors.white.withValues(alpha: 0.9), size: 20),
                           const SizedBox(width: 10),
                           Text(
-                            card.name,
+                            card.nome,
                             style: const TextStyle(
                               color: Colors.white, 
                               fontWeight: FontWeight.bold, 
@@ -112,7 +114,7 @@ class CreditCardItemWidget extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          brandLogos[card.brand] ?? 'CARD',
+                          brandLogos[card.bandeira.toLowerCase()] ?? 'CARD', // Normaliza para lowerCase
                           style: const TextStyle(
                             color: Colors.white, 
                             fontWeight: FontWeight.w900, 
@@ -125,11 +127,11 @@ class CreditCardItemWidget extends StatelessWidget {
                     ],
                   ),
                   
-                  const Spacer(), // Agora o Spacer sabe até onde empurrar (graças ao height: 230)
+                  const Spacer(),
 
                   // Card Number
                   Text(
-                    '•••• •••• •••• ${card.lastDigits}',
+                    '•••• •••• •••• ${card.ultimos4}',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.9), 
                       fontFamily: 'monospace', 
@@ -177,7 +179,7 @@ class CreditCardItemWidget extends StatelessWidget {
                         )
                       ),
                       Text(
-                        currencyFormat.format(card.limit),
+                        currencyFormat.format(card.limite),
                         style: TextStyle(
                           fontSize: 13, 
                           color: Colors.white.withValues(alpha: 0.6)

@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:konta_app/core/config/env.dart';
 import 'package:konta_app/data/models/category_model.dart';
-import 'package:konta_app/data/models/card_model.dart';
+import 'package:konta_app/data/models/credit_card_model.dart'; // Import do modelo correto
 import 'package:konta_app/core/utils/konta_snack.dart';
 
 class VariableExpensesController extends ChangeNotifier {
@@ -16,7 +16,9 @@ class VariableExpensesController extends ChangeNotifier {
   
   List<CategoryModel> categoriasAtivas = [];
   List<CategoryModel> categoriasInativas = [];
-  List<CardModel> userCards = []; // Cache de cartões para o modal
+  
+  // Cache de cartões para o modal (Tipo correto: CreditCardModel)
+  List<CreditCardModel> userCards = []; 
 
   final String _baseUrl = Env.apiUrl;
 
@@ -28,7 +30,7 @@ class VariableExpensesController extends ChangeNotifier {
   }
 
   // ===========================================================================
-  // 1. CARREGAMENTO DE DADOS (DASHBOARD DA TELA)
+  // 1. CARREGAMENTO DE DADOS
   // ===========================================================================
 
   Future<void> fetchAllData(String token, int userId, {int mes = 1, int ano = 2026}) async {
@@ -36,14 +38,13 @@ class VariableExpensesController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Paralelismo: Busca Limite, Categorias e Cartões ao mesmo tempo para ser rápido
       await Future.wait([
         _fetchLimite(token, userId, mes, ano),
         _fetchCategoriasAtivas(token, userId),
-        fetchCards(token, userId), // Já deixa os cartões prontos para o uso
+        fetchCards(token, userId), 
       ]);
     } catch (e) {
-      print("Erro ao carregar dados: $e");
+      debugPrint("Erro ao carregar dados: $e");
     } finally {
       isLoading = false;
       notifyListeners();
@@ -62,7 +63,7 @@ class VariableExpensesController extends ChangeNotifier {
         }
       }
     } catch (e) {
-      print("Erro limite: $e");
+      debugPrint("Erro limite: $e");
     }
   }
 
@@ -74,36 +75,35 @@ class VariableExpensesController extends ChangeNotifier {
         final List<dynamic> lista = jsonDecode(response.body);
         categoriasAtivas = lista.map((e) => CategoryModel.fromJson(e)).toList();
         
-        // Calcula o total gasto no mês somando as categorias
         gastoTotalMes = categoriasAtivas.fold(0.0, (soma, categoria) {
           return soma + categoria.totalGasto;
         });
       }
     } catch (e) {
-      print("Erro categorias: $e");
+      debugPrint("Erro categorias: $e");
     }
   }
 
-  // Busca Cartões (para o Modal de Adicionar Gasto)
+  // Busca Cartões
   Future<void> fetchCards(String token, int userId) async {
     final url = Uri.parse('$_baseUrl/api/cartoes/$userId');
     try {
       final response = await http.get(url, headers: _headers(token));
       if (response.statusCode == 200) {
         final List<dynamic> lista = jsonDecode(response.body);
-        userCards = lista.map((e) => CardModel.fromJson(e)).toList();
-        notifyListeners(); // Atualiza dropdown se estiver aberto
+        // Mapeia para CreditCardModel corretamente
+        userCards = lista.map((e) => CreditCardModel.fromJson(e)).toList();
+        notifyListeners(); 
       }
     } catch (e) {
-      print("Erro cartões: $e");
+      debugPrint("Erro cartões: $e");
     }
   }
 
   // ===========================================================================
-  // 2. GESTÃO DE CATEGORIAS (CRUD)
+  // 2. GESTÃO DE CATEGORIAS
   // ===========================================================================
 
-  // CRIAR
   Future<bool> createCategory(BuildContext context, String token, int userId, String nome, double limite) async {
     final url = Uri.parse('$_baseUrl/criarCategoria/$userId');
     try {
@@ -127,11 +127,8 @@ class VariableExpensesController extends ChangeNotifier {
     }
   }
 
-  // EDITAR (NOVO!)
   Future<bool> updateCategory(BuildContext context, String token, int userId, int catId, String nome, double limite) async {
-    // Rota: localhost:8080/updateCategoria?id_categoria=7
     final url = Uri.parse('$_baseUrl/updateCategoria?id_categoria=$catId');
-    
     try {
       final body = jsonEncode({
         "categoria": {
@@ -139,7 +136,6 @@ class VariableExpensesController extends ChangeNotifier {
           "limite": limite.toString()
         }
       });
-
       final response = await http.patch(url, headers: _headers(token), body: body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -155,12 +151,10 @@ class VariableExpensesController extends ChangeNotifier {
     }
   }
 
-  // DELETAR (Arquivar)
   Future<void> deleteCategory(BuildContext context, String token, int userId, int catId) async {
     final url = Uri.parse('$_baseUrl/deleteCategorias?id_categoria=$catId');
     try {
       final response = await http.delete(url, headers: _headers(token));
-      
       if (response.statusCode == 200) {
         KontaSnack.show(context, title: "Categoria arquivada");
         await _fetchCategoriasAtivas(token, userId);
@@ -171,7 +165,7 @@ class VariableExpensesController extends ChangeNotifier {
   }
 
   // ===========================================================================
-  // 3. GESTÃO DE INATIVAS E LIMITE GLOBAL
+  // 3. GESTÃO DE INATIVAS E META
   // ===========================================================================
 
   Future<void> fetchInativas(String token, int userId) async {
@@ -184,7 +178,7 @@ class VariableExpensesController extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print("Erro inativas: $e");
+      debugPrint("Erro inativas: $e");
     }
   }
 
@@ -224,7 +218,7 @@ class VariableExpensesController extends ChangeNotifier {
   }
 
   // ===========================================================================
-  // 4. ADICIONAR GASTO (TRANSAÇÃO)
+  // 4. ADICIONAR GASTO
   // ===========================================================================
 
   Future<bool> addExpense({
@@ -235,11 +229,11 @@ class VariableExpensesController extends ChangeNotifier {
     required double valor,
     required String descricao,
     required DateTime data,
-    required String formaPagamento, // "DINHEIRO", "PIX", "CREDITO", "DEBITO"
+    required String formaPagamento, 
     String? uuidCartao,
   }) async {
     
-    // Validação de negócio: Crédito exige cartão
+    // Validação: Crédito exige cartão
     if (formaPagamento == 'CREDITO' && (uuidCartao == null || uuidCartao.isEmpty)) {
       KontaSnack.show(context, type: KontaSnackType.warning, title: "Atenção", message: "Selecione o cartão de crédito.");
       return false;
@@ -249,7 +243,6 @@ class VariableExpensesController extends ChangeNotifier {
     final String dataFormatada = DateFormat('yyyy/MM/dd').format(data);
 
     try {
-      // Monta o payload exato que o backend espera
       final Map<String, dynamic> dadosGasto = {
         "valor": valor.toString(),
         "data_gasto": dataFormatada,
@@ -268,7 +261,7 @@ class VariableExpensesController extends ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         KontaSnack.show(context, title: "Sucesso", message: "Gasto registrado!");
-        await _fetchCategoriasAtivas(token, userId); // Atualiza os saldos na tela
+        await _fetchCategoriasAtivas(token, userId);
         return true;
       } else {
         throw Exception("Status ${response.statusCode}");

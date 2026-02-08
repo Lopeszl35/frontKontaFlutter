@@ -18,8 +18,6 @@ class DashboardController extends ChangeNotifier {
 
     try {
       final url = Uri.parse('$_baseUrl/api/dashboard/getSummary?mes=$mes&ano=$ano');
-      
-      print("📡 Buscando Dashboard: $url");
 
       final response = await http.get(
         url,
@@ -28,9 +26,6 @@ class DashboardController extends ChangeNotifier {
           "Authorization": "Bearer $token" // O PULO DO GATO: Enviando o Token
         },
       );
-
-      print("🔙 Status Dash: ${response.statusCode}");
-      print("🔙 Body Dash: ${response.body}");
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
