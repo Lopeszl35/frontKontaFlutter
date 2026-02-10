@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:konta_app/data/models/credit_card_model.dart';
-import 'package:konta_app/data/repositories/credit_card_repository.dart'; // Atenção ao caminho correto
+import 'package:konta_app/data/repositories/credit_card_repository.dart';
 
 class CreditCardController extends ChangeNotifier {
   final _repository = CreditCardRepository();
@@ -8,14 +8,17 @@ class CreditCardController extends ChangeNotifier {
   bool isLoading = false;
   String? error;
   
-  // Lista de cartões (Tela Principal)
+  // Lista de cartões
   List<CreditCardModel> cards = [];
   
-  // Detalhes (Tela de Detalhe)
+  // Detalhes
   CreditCardModel? selectedCard;
-  CardOverviewModel? cardOverview; 
+  CardOverviewModel? cardOverview;
+  
+  // NOVA VARIÁVEL DE ESTADO: DATA DA FATURA ATUAL
+  DateTime currentDate = DateTime.now(); 
 
-  // --- LEITURA (READ) ---
+  // --- LEITURA ---
 
   Future<void> fetchCards(String token, int userId) async {
     isLoading = true;
@@ -35,14 +38,33 @@ class CreditCardController extends ChangeNotifier {
 
   Future<void> selectCard(String token, int userId, CreditCardModel card) async {
     selectedCard = card;
-    cardOverview = null; // Limpa view anterior para não mostrar dados errados
+    cardOverview = null;
+    currentDate = DateTime.now(); // Reseta para o mês atual ao abrir
+    
+    await _fetchInvoiceData(token, userId);
+  }
+
+  // NOVO MÉTODO: Navegar entre meses
+  Future<void> changeInvoiceMonth(String token, int userId, int monthsToAdd) async {
+    // Ajusta a data (ex: Jan -> Fev)
+    currentDate = DateTime(currentDate.year, currentDate.month + monthsToAdd, 1);
+    await _fetchInvoiceData(token, userId);
+  }
+
+  // Método privado para buscar dados com base na data atual do controller
+  Future<void> _fetchInvoiceData(String token, int userId) async {
+    if (selectedCard == null) return;
+
     isLoading = true;
     notifyListeners();
 
     try {
-      final now = DateTime.now();
       cardOverview = await _repository.getCardOverview(
-        token, userId, card.uuid, now.month, now.year
+        token, 
+        userId, 
+        selectedCard!.uuid, 
+        currentDate.month, 
+        currentDate.year
       );
     } catch (e) {
       debugPrint("❌ Erro overview: $e");
@@ -59,96 +81,66 @@ class CreditCardController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- ESCRITA (WRITE - NOVAS FUNÇÕES) ---
-
-  // 1. Criar
+  // --- MÉTODOS DE ESCRITA (Mantidos iguais, com small fix no refresh) ---
+  
   Future<bool> addCard(BuildContext context, String token, int userId, Map<String, dynamic> cardData) async {
     return _performAction(() => _repository.createCard(token, userId, cardData), token, userId);
   }
 
-  // 2. Editar
   Future<bool> editCard(String token, int userId, String uuid, Map<String, dynamic> cardData) async {
     return _performAction(() => _repository.editCard(token, userId, uuid, cardData), token, userId);
   }
 
-  // 3. Excluir
   Future<bool> deleteCard(String token, int userId, String uuid) async {
     final success = await _performAction(() => _repository.deleteCard(token, userId, uuid), token, userId);
-    if (success) clearSelection(); // Se deletou, volta pra lista
+    if (success) clearSelection();
     return success;
   }
 
-  // 4. Ativar/Desativar (Bloquear)
   Future<bool> toggleActive(String token, int userId, String uuid, bool novoEstado) async {
-    // Apenas executa, o fetchCards no final do _performAction atualiza a UI
-    return _performAction(
-      () => _repository.toggleActive(token, userId, uuid, novoEstado), 
-      token, userId
-    );
+    return _performAction(() => _repository.toggleActive(token, userId, uuid, novoEstado), token, userId);
   }
 
-  // 5. Pagar Fatura
-  Future<bool> payInvoice(String token, int userId, int cardId, double valor) async {
+  Future<bool> payInvoice(String token, int userId, int cardId, double valor, int mes, int ano) async {
     isLoading = true;
-    notifyListeners();
-    try {
-      final now = DateTime.now();
-      final success = await _repository.payInvoice(token, userId, cardId, valor, now.month, now.year);
-      
-      if (success && selectedCard != null) {
-        // Se pagou, recarrega os detalhes da fatura para atualizar os valores na tela
-        await selectCard(token, userId, selectedCard!);
-        return true;
-      }
-      return false;
-    } catch (e) {
-      debugPrint("❌ Erro pagar fatura: $e");
-      error = "Falha no pagamento.";
-      return false;
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // 6. Adicionar Gasto Manual
-  Future<bool> addTransaction(String token, int userId, String uuid, Map<String, dynamic> data) async {
-    isLoading = true;
-    notifyListeners();
-    try {
-      final success = await _repository.addCardExpense(token, userId, uuid, data);
-      
-      if (success && selectedCard != null) {
-        // Recarrega a fatura para mostrar o novo gasto
-        await selectCard(token, userId, selectedCard!);
-        return true;
-      }
-      return false;
-    } catch (e) {
-      debugPrint("❌ Erro add gasto cartão: $e");
-      error = "Falha ao adicionar gasto.";
-      return false;
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // --- HELPER PRIVADO (DRY - Don't Repeat Yourself) ---
-  // Executa uma ação no repositório e, se der certo, recarrega a lista de cartões
-  Future<bool> _performAction(Future<bool> Function() action, String token, int userId) async {
-    isLoading = true;
+    error = null; // Limpa erro anterior
     notifyListeners();
     
     try {
-      final success = await action();
-      if (success) {
-        await fetchCards(token, userId); // Atualiza a lista para refletir mudanças
+      final success = await _repository.payInvoice(token, userId, cardId, valor, mes, ano);
+      
+      if (success && selectedCard != null) {
+        // Recarrega a fatura ATUAL da tela (currentDate)
+        await selectCard(token, userId, selectedCard!);
         return true;
       }
       return false;
     } catch (e) {
-      debugPrint("❌ Erro na operação: $e");
+      // Captura a mensagem exata que veio do Repository (ex: "Valor excede o restante...")
+      // Remove o prefixo "Exception: " que o Dart adiciona automaticamente ao converter pra string
+      error = e.toString().replaceAll("Exception: ", "");
+      debugPrint("❌ Erro pagar fatura: $error");
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> addTransaction(String token, int userId, String uuid, Map<String, dynamic> data) async {
+    final success = await _repository.addCardExpense(token, userId, uuid, data);
+    if (success) await _fetchInvoiceData(token, userId);
+    return success;
+  }
+
+  Future<bool> _performAction(Future<bool> Function() action, String token, int userId) async {
+    isLoading = true;
+    notifyListeners();
+    try {
+      final success = await action();
+      if (success) await fetchCards(token, userId);
+      return success;
+    } catch (e) {
       error = "Operação falhou.";
       return false;
     } finally {

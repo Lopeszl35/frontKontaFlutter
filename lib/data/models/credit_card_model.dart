@@ -11,6 +11,7 @@ class CreditCardModel {
   final int diaFechamento;
   final int diaVencimento;
   final Color color;
+  final String corHex;
   final bool ativo;
 
   CreditCardModel({
@@ -24,6 +25,7 @@ class CreditCardModel {
     required this.diaFechamento,
     required this.diaVencimento,
     required this.color,
+    required this.corHex,
     required this.ativo,
   });
 
@@ -43,7 +45,8 @@ class CreditCardModel {
       diaFechamento: json['diaFechamento'] ?? 1,
       diaVencimento: json['diaVencimento'] ?? 10,
       color: _parseColor(json['corHex']),
-      ativo: json['ativo'] ?? true,
+      corHex: json['corHex'] ?? '',
+      ativo: json['ativo'] == 1 || json['ativo'] == true,
     );
   }
 

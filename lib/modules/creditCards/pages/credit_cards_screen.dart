@@ -10,6 +10,7 @@ import 'package:konta_app/modules/creditCards/controllers/credit_card_controller
 import 'package:konta_app/modules/creditCards/widgets/credit_card_item.dart';
 import 'package:konta_app/modules/creditCards/widgets/card_expenses_list.dart';
 import 'package:konta_app/modules/creditCards/widgets/add_card_modal.dart';
+import 'package:konta_app/modules/creditCards/widgets/add_card_expense_modal.dart';
 
 class CreditCardsScreen extends StatelessWidget {
   const CreditCardsScreen({super.key});
@@ -52,7 +53,6 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
     }
   }
 
-  // Abre Modal de Criação (Reutiliza AddCardModal existente)
   void _openAddModal() {
     final existingController = Provider.of<CreditCardController>(context, listen: false);
     showModalBottomSheet(
@@ -85,7 +85,7 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
     return _buildListView(context, controller);
   }
 
-  // ────────── LIST VIEW (PRINCIPAL) ──────────
+  // ────────── LIST VIEW ──────────
   Widget _buildListView(BuildContext context, CreditCardController controller) {
     final totalLimit = controller.cards.fold(0.0, (sum, c) => sum + c.limite);
     
@@ -109,7 +109,6 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
-                    // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -129,7 +128,6 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
                         children: [
                           Expanded(child: _summaryCard('Total Limite', currencyFormat.format(totalLimit), AppTheme.neonGreen)),
                           const SizedBox(width: 12),
-                          // Aqui poderia vir o total usado se a API de listagem trouxesse
                           Expanded(child: _summaryCard('Meus Cartões', '${controller.cards.length}', AppTheme.primaryModern)),
                         ],
                       ),
@@ -155,11 +153,12 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
     );
   }
 
-  // ────────── DETAIL VIEW (DETALHES DO CARTÃO) ──────────
+  // ────────── DETAIL VIEW ──────────
   Widget _buildDetailView(BuildContext context, CreditCardController controller, String token, int userId) {
     final card = controller.selectedCard!;
     final overview = controller.cardOverview;
 
+    // Se estiver carregando, mostra loading
     if (controller.isLoading || overview == null) {
       return Scaffold(
         backgroundColor: AppTheme.background,
@@ -181,25 +180,14 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          // MENU DE OPÇÕES (EDITAR, EXCLUIR, ATIVAR)
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: AppTheme.textWhite),
             color: AppTheme.surface,
             onSelected: (value) {
-              if (value == 'edit') {
-                KontaSnack.show(context, title: "Em Breve", message: "Edição será implementada no próximo passo.");
-                // _showEditModal(context, controller, card); // Futuro
-              } else if (value == 'delete') {
-                _confirmDelete(context, controller, token, userId, card.uuid);
-              } else if (value == 'toggle') {
-                controller.toggleActive(token, userId, card.uuid, !card.ativo);
-              }
+              if (value == 'delete') _confirmDelete(context, controller, token, userId, card.uuid);
+              if (value == 'toggle') controller.toggleActive(token, userId, card.uuid, !card.ativo);
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'edit',
-                child: Row(children: [Icon(Icons.edit, size: 18, color: AppTheme.textSilver), SizedBox(width: 8), Text('Editar', style: TextStyle(color: AppTheme.textWhite))]),
-              ),
               PopupMenuItem<String>(
                 value: 'toggle',
                 child: Row(children: [
@@ -221,11 +209,15 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            // Preview
+            // Preview do Cartão
             CreditCardItemWidget(card: card, isSelected: true, onTap: () {}),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
-            // AÇÕES RÁPIDAS (Pagar Fatura, Add Gasto)
+            // --- FILTRO DE DATA (NOVO) ---
+            _buildMonthSelector(controller, token, userId),
+            const SizedBox(height: 16),
+
+            // Ações Rápidas
             Row(
               children: [
                 Expanded(
@@ -240,12 +232,29 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
-                       // Implementar modal de gasto manual específico do cartão aqui
-                       KontaSnack.show(context, title: "Em Breve", message: "Lançamento manual no cartão.");
+                       // --- INTEGRAÇÃO AQUI ---
+                       // Passamos o controller existente para o modal funcionar
+                       final existingController = Provider.of<CreditCardController>(context, listen: false);
+                       
+                       showModalBottomSheet(
+                         context: context,
+                         isScrollControlled: true,
+                         backgroundColor: Colors.transparent,
+                         builder: (ctx) {
+                           // Injetamos o controller via Provider.value para o modal ter acesso
+                           return ChangeNotifierProvider.value(
+                             value: existingController,
+                             child: AddCardExpenseModal(cardUuid: card.uuid),
+                           );
+                         }
+                       );
                     },
                     icon: const Icon(Icons.add, size: 18, color: AppTheme.textWhite),
                     label: const Text("Add Gasto", style: TextStyle(color: AppTheme.textWhite)),
-                    style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.borderDark), padding: const EdgeInsets.symmetric(vertical: 12)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppTheme.borderDark), 
+                      padding: const EdgeInsets.symmetric(vertical: 12)
+                    ),
                   ),
                 ),
               ],
@@ -264,45 +273,82 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
             const SizedBox(height: 16),
 
             _glassCard(
-              title: 'Resumo da Fatura',
+              title: 'Detalhes da Fatura',
               icon: Icons.calendar_today,
               child: Column(
                 children: [
-                  _infoRow('Limite Total', currencyFormat.format(overview.limiteTotal)),
-                  _infoRow('Fechamento', 'Dia ${card.diaFechamento}'),
-                  _infoRow('Vencimento', 'Dia ${card.diaVencimento}'),
+                  _infoRow('Valor da Fatura', currencyFormat.format(overview.limiteUsado)), // Assume que usado no mês = fatura
+                  _infoRow('Vencimento', '${card.diaVencimento}/${controller.currentDate.month}/${controller.currentDate.year}'),
                 ],
               ),
             ),
             
-            // ... Resto dos Widgets (Categorias, Parcelas, Histórico) mantidos iguais ao anterior ...
             const SizedBox(height: 16),
             if (sortedCategories.isNotEmpty) _glassCard(title: 'Por Categoria', icon: Icons.pie_chart, iconColor: AppTheme.neonOrange, child: Column(children: sortedCategories.map((entry) => _categoryRow(entry, currencyFormat)).toList())),
             
             if (overview.parcelasAtivas.isNotEmpty) ...[
               const SizedBox(height: 16),
-              _glassCard(title: 'Parcelas Ativas', icon: Icons.trending_down, iconColor: AppTheme.neonBlue, child: Column(children: overview.parcelasAtivas.map((p) => _installmentRow(p, currencyFormat)).toList())),
+              _glassCard(title: 'Parcelas Futuras', icon: Icons.trending_down, iconColor: AppTheme.neonBlue, child: Column(children: overview.parcelasAtivas.map((p) => _installmentRow(p, currencyFormat)).toList())),
             ],
 
             const SizedBox(height: 16),
-            const Text("Histórico da Fatura", style: TextStyle(color: AppTheme.textSilver, fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text("Lançamentos", style: TextStyle(color: AppTheme.textSilver, fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            CardExpensesListWidget(expenses: overview.transacoesMes, selectedMonth: DateFormat('MMMM yyyy', 'pt_BR').format(DateTime.now())),
+            
+            // Passa o mês selecionado para o título da lista
+            CardExpensesListWidget(
+              expenses: overview.transacoesMes, 
+              selectedMonth: DateFormat('MMMM yyyy', 'pt_BR').format(controller.currentDate)
+            ),
           ],
         ),
       ),
     );
   }
 
-  // --- MODALS AUXILIARES SIMPLES (Para manter tudo num arquivo por enquanto) ---
+  // --- WIDGET DO SELETOR DE MÊS (NOVO) ---
+  Widget _buildMonthSelector(CreditCardController controller, String token, int userId) {
+    final dateFormat = DateFormat('MMMM yyyy', 'pt_BR');
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: AppTheme.borderDark),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left, color: AppTheme.neonGreen),
+            onPressed: () => controller.changeInvoiceMonth(token, userId, -1),
+          ),
+          Text(
+            dateFormat.format(controller.currentDate).toUpperCase(),
+            style: const TextStyle(
+              color: AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              letterSpacing: 1.2
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right, color: AppTheme.neonGreen),
+            onPressed: () => controller.changeInvoiceMonth(token, userId, 1),
+          ),
+        ],
+      ),
+    );
+  }
 
+  // --- MODALS AUXILIARES ---
   void _confirmDelete(BuildContext context, CreditCardController controller, String token, int userId, String uuid) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,
         title: const Text("Excluir Cartão?", style: TextStyle(color: AppTheme.textWhite)),
-        content: const Text("Essa ação não pode ser desfeita e excluirá o histórico local deste cartão.", style: TextStyle(color: AppTheme.textSilver)),
+        content: const Text("Essa ação não pode ser desfeita.", style: TextStyle(color: AppTheme.textSilver)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancelar", style: TextStyle(color: AppTheme.textSilver))),
           TextButton(
@@ -319,39 +365,138 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
 
   void _showPayInvoiceDialog(BuildContext context, CreditCardController controller, String token, int userId, int cardId) {
     final valorCtrl = TextEditingController();
+    
+    // Começa com a data que o usuário já estava visualizando na tela
+    DateTime selectedDate = controller.currentDate; 
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        title: const Text("Pagar Fatura", style: TextStyle(color: AppTheme.textWhite)),
-        content: TextField(
-          controller: valorCtrl,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: const TextStyle(color: AppTheme.textWhite),
-          decoration: const InputDecoration(
-            labelText: "Valor do Pagamento",
-            prefixText: "R\$ ",
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancelar", style: TextStyle(color: AppTheme.neonRed))),
-          TextButton(
-            onPressed: () {
-              final valor = double.tryParse(valorCtrl.text.replaceAll(',', '.')) ?? 0.0;
-              if (valor > 0) {
-                Navigator.pop(ctx);
-                controller.payInvoice(token, userId, cardId, valor);
-              }
-            }, 
-            child: const Text("Confirmar", style: TextStyle(color: AppTheme.neonGreen, fontWeight: FontWeight.bold))
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        // StatefulBuilder permite atualizar o estado APENAS dentro do Dialog
+        return StatefulBuilder(
+          builder: (context, setStateModal) {
+            return AlertDialog(
+              backgroundColor: AppTheme.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text("Pagar Fatura", style: TextStyle(color: AppTheme.textWhite)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 1. INPUT DE VALOR
+                  TextField(
+                    controller: valorCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: const TextStyle(color: AppTheme.textWhite, fontSize: 18, fontWeight: FontWeight.bold),
+                    decoration: const InputDecoration(
+                      labelText: "Valor do Pagamento",
+                      labelStyle: TextStyle(color: AppTheme.textSilver),
+                      prefixText: "R\$ ",
+                      prefixStyle: TextStyle(color: AppTheme.neonGreen),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.borderDark)),
+                      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 2. SELETOR DE MÊS DE REFERÊNCIA
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("Mês de Referência", style: TextStyle(color: AppTheme.textSilver, fontSize: 12)),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  InkWell(
+                    onTap: () async {
+                      // Seletor de Data (Mês/Ano)
+                      // Nota: O DatePicker padrão seleciona dias, mas usamos apenas Mês/Ano no backend
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
+                        builder: (context, child) {
+                          return Theme(data: AppTheme.lightTheme, child: child!);
+                        },
+                      );
+                      if (picked != null) {
+                        setStateModal(() {
+                          selectedDate = picked;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.inputDark,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.borderDark),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            DateFormat('MMMM yyyy', 'pt_BR').format(selectedDate).toUpperCase(),
+                            style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold),
+                          ),
+                          const Icon(Icons.calendar_today, color: AppTheme.neonGreen, size: 18),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx), 
+                  child: const Text("Cancelar", style: TextStyle(color: AppTheme.neonRed))
+                ),
+                ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.neonGreen,
+                      foregroundColor: Colors.black,
+                    ),
+                    onPressed: () {
+                      final valor = double.tryParse(valorCtrl.text.replaceAll(',', '.')) ?? 0.0;
+                      
+                      if (valor > 0) {
+                        Navigator.pop(ctx); // Fecha o modal e inicia o processo
+                        
+                        controller.payInvoice(
+                          token, 
+                          userId, 
+                          cardId, 
+                          valor, 
+                          selectedDate.month, 
+                          selectedDate.year
+                        ).then((success) {
+                          if (success) {
+                            KontaSnack.show(context, title: "Sucesso", message: "Pagamento realizado!");
+                          } else {
+                            // --- AQUI ESTÁ A MUDANÇA ---
+                            // Mostra o erro específico que o controller capturou do backend
+                            KontaSnack.show(
+                              context, 
+                              type: KontaSnackType.error, 
+                              title: "Erro", 
+                              message: controller.error ?? "Falha ao processar pagamento."
+                            );
+                          }
+                        });
+                      } else {
+                        KontaSnack.show(context, type: KontaSnackType.warning, title: "Atenção", message: "Insira um valor válido.");
+                      }
+                    }, 
+                    child: const Text("Confirmar Pagamento", style: TextStyle(fontWeight: FontWeight.bold))
+                  ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
-  // --- HELPERS VISUAIS (Reutilizados) ---
+  // --- HELPERS VISUAIS ---
   Widget _summaryCard(String label, String value, Color valueColor) {
     return Container(
       padding: const EdgeInsets.all(16),

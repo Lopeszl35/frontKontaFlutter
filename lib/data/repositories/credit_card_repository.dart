@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:konta_app/core/config/env.dart'; 
 import 'package:konta_app/data/models/credit_card_model.dart';
+// Importe o novo utilitário
+import 'package:konta_app/core/utils/api_error_handler.dart';
 
 class CreditCardRepository {
-  // Pega a URL dinâmica do Env
   final String _baseUrl = Env.apiUrl; 
 
-  // Headers Padrão
   Map<String, String> _headers(String token) => {
     "Content-Type": "application/json",
     "Authorization": "Bearer $token"
@@ -16,107 +16,80 @@ class CreditCardRepository {
   // 1. GET: Listar todos os cartões
   Future<List<CreditCardModel>> getAllCards(String token, int userId) async {
     final uri = Uri.parse('$_baseUrl/api/cartoes/$userId');
-    
     final response = await http.get(uri, headers: _headers(token));
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => CreditCardModel.fromJson(json)).toList();
-    } else {
-      throw Exception('Erro ${response.statusCode}: ${response.body}');
-    }
+    ApiErrorHandler.check(response); // <-- USO CENTRALIZADO
+
+    final List<dynamic> data = jsonDecode(response.body);
+    return data.map((json) => CreditCardModel.fromJson(json)).toList();
   }
 
-  // 2. GET: Visão Geral (Detalhes do Cartão)
+  // 2. GET: Visão Geral
   Future<CardOverviewModel> getCardOverview(String token, int userId, String cardUuid, int month, int year) async {
-    final uri = Uri.parse(
-      '$_baseUrl/api/getCartoesVisaoGeral/$userId?ano=$year&mes=$month&cartao_uuid=$cardUuid'
-    );
-
+    final uri = Uri.parse('$_baseUrl/api/getCartoesVisaoGeral/$userId?ano=$year&mes=$month&cartao_uuid=$cardUuid');
     final response = await http.get(uri, headers: _headers(token));
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return CardOverviewModel.fromJson(data);
-    } else {
-      throw Exception('Erro ao carregar detalhes: ${response.statusCode}');
-    }
+    ApiErrorHandler.check(response);
+
+    return CardOverviewModel.fromJson(jsonDecode(response.body));
   }
 
   // 3. POST: Criar Cartão
   Future<bool> createCard(String token, int userId, Map<String, dynamic> body) async {
     final uri = Uri.parse('$_baseUrl/api/criarCartao/$userId');
+    final response = await http.post(uri, headers: _headers(token), body: jsonEncode(body));
 
-    final response = await http.post(
-      uri,
-      headers: _headers(token),
-      body: jsonEncode(body),
-    );
-
-    return response.statusCode == 200 || response.statusCode == 201;
+    ApiErrorHandler.check(response);
+    return true;
   }
 
   // 4. POST: Pagar Fatura
-  Future<bool> payInvoice(String token, int userId, int cardId, double value, int month, int year) async {
+  Future<bool> payInvoice(String token, int userId, int cardId, double valor, int month, int year) async {
     final uri = Uri.parse('$_baseUrl/api/cartoes/$userId/$cardId/pagarFatura');
-
     final body = {
-      "valorPagamento": value, // CORRIGIDO: Backend espera 'valorPagamento', não 'valorPagemto'
+      "valorPagamento": valor,
       "ano": year,
       "mes": month
     };
+    final response = await http.post(uri, headers: _headers(token), body: jsonEncode(body));
 
-    final response = await http.post(
-      uri,
-      headers: _headers(token),
-      body: jsonEncode(body),
-    );
-
-    return response.statusCode == 200;
+    ApiErrorHandler.check(response);
+    return true;
   }
 
   // 5. PUT: Editar Cartão
   Future<bool> editCard(String token, int userId, String cardUuid, Map<String, dynamic> body) async {
-    final uri = Uri.parse('$_baseUrl/editarCartoes/$userId/$cardUuid');
+    final uri = Uri.parse('$_baseUrl/api/editarCartoes/$userId/$cardUuid'); 
+    final response = await http.put(uri, headers: _headers(token), body: jsonEncode(body));
 
-    final response = await http.put(
-      uri,
-      headers: _headers(token),
-      body: jsonEncode(body),
-    );
-
-    return response.statusCode == 200;
+    ApiErrorHandler.check(response);
+    return true;
   }
 
   // 6. DELETE: Excluir Cartão
   Future<bool> deleteCard(String token, int userId, String cardUuid) async {
-    final uri = Uri.parse('$_baseUrl/cartoes/$userId/$cardUuid');
-
+    final uri = Uri.parse('$_baseUrl/api/cartoes/$userId/$cardUuid');
     final response = await http.delete(uri, headers: _headers(token));
 
-    return response.statusCode == 200;
+    ApiErrorHandler.check(response);
+    return true;
   }
 
-  // 7. PATCH: Ativar/Desativar Cartão
+  // 7. PATCH: Ativar/Desativar
   Future<bool> toggleActive(String token, int userId, String cardUuid, bool ativar) async {
-    // A rota usa query param ?ativar=true/false
-    final uri = Uri.parse('$_baseUrl/cartoes/$userId/$cardUuid/ativar?ativar=$ativar');
-
+    final uri = Uri.parse('$_baseUrl/api/cartoes/$userId/$cardUuid/ativar?ativar=$ativar');
     final response = await http.patch(uri, headers: _headers(token));
 
-    return response.statusCode == 200;
+    ApiErrorHandler.check(response);
+    return true;
   }
 
-  // 8. POST: Adicionar Gasto Manual no Cartão
+  // 8. POST: Gasto Manual
   Future<bool> addCardExpense(String token, int userId, String cardUuid, Map<String, dynamic> dadosLancamento) async {
-    final uri = Uri.parse('$_baseUrl/cartoes/$userId/$cardUuid/lancamentos');
+    final uri = Uri.parse('$_baseUrl/api/cartoes/$userId/$cardUuid/lancamentos');
+    final response = await http.post(uri, headers: _headers(token), body: jsonEncode(dadosLancamento));
 
-    final response = await http.post(
-      uri,
-      headers: _headers(token),
-      body: jsonEncode(dadosLancamento),
-    );
-
-    return response.statusCode == 200 || response.statusCode == 201;
+    ApiErrorHandler.check(response);
+    return true;
   }
 }
