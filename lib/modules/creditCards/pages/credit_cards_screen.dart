@@ -158,7 +158,6 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
     final card = controller.selectedCard!;
     final overview = controller.cardOverview;
 
-    // Se estiver carregando, mostra loading
     if (controller.isLoading || overview == null) {
       return Scaffold(
         backgroundColor: AppTheme.background,
@@ -184,10 +183,31 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
             icon: const Icon(Icons.more_vert, color: AppTheme.textWhite),
             color: AppTheme.surface,
             onSelected: (value) {
-              if (value == 'delete') _confirmDelete(context, controller, token, userId, card.uuid);
-              if (value == 'toggle') controller.toggleActive(token, userId, card.uuid, !card.ativo);
+              if (value == 'edit') {
+                // --- IMPLEMENTAÇÃO DA EDIÇÃO ---
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (ctx) => AddCardModal(
+                    controller: controller,
+                    cardToEdit: card, // Passa o cartão atual para preencher os campos
+                  ),
+                ).then((_) {
+                  // Atualiza a visualização com os dados editados
+                  controller.selectCard(token, userId, card);
+                });
+              } else if (value == 'delete') {
+                _confirmDelete(context, controller, token, userId, card.uuid);
+              } else if (value == 'toggle') {
+                controller.toggleActive(token, userId, card.uuid, !card.ativo);
+              }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'edit',
+                child: Row(children: [Icon(Icons.edit, size: 18, color: AppTheme.textSilver), SizedBox(width: 8), Text('Editar', style: TextStyle(color: AppTheme.textWhite))]),
+              ),
               PopupMenuItem<String>(
                 value: 'toggle',
                 child: Row(children: [
@@ -209,11 +229,11 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            // Preview do Cartão
+            // Preview
             CreditCardItemWidget(card: card, isSelected: true, onTap: () {}),
             const SizedBox(height: 16),
 
-            // --- FILTRO DE DATA (NOVO) ---
+            // Filtro de Data
             _buildMonthSelector(controller, token, userId),
             const SizedBox(height: 16),
 
@@ -232,16 +252,12 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
-                       // --- INTEGRAÇÃO AQUI ---
-                       // Passamos o controller existente para o modal funcionar
                        final existingController = Provider.of<CreditCardController>(context, listen: false);
-                       
                        showModalBottomSheet(
                          context: context,
                          isScrollControlled: true,
                          backgroundColor: Colors.transparent,
                          builder: (ctx) {
-                           // Injetamos o controller via Provider.value para o modal ter acesso
                            return ChangeNotifierProvider.value(
                              value: existingController,
                              child: AddCardExpenseModal(cardUuid: card.uuid),
@@ -251,18 +267,14 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
                     },
                     icon: const Icon(Icons.add, size: 18, color: AppTheme.textWhite),
                     label: const Text("Add Gasto", style: TextStyle(color: AppTheme.textWhite)),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppTheme.borderDark), 
-                      padding: const EdgeInsets.symmetric(vertical: 12)
-                    ),
+                    style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.borderDark), padding: const EdgeInsets.symmetric(vertical: 12)),
                   ),
                 ),
               ],
             ),
-            
             const SizedBox(height: 24),
 
-            // Resumo Financeiro
+            // Resumo
             Row(
               children: [
                 Expanded(child: _summaryCard('Limite Usado', currencyFormat.format(overview.limiteUsado), AppTheme.neonRed)),
@@ -277,7 +289,7 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
               icon: Icons.calendar_today,
               child: Column(
                 children: [
-                  _infoRow('Valor da Fatura', currencyFormat.format(overview.limiteUsado)), // Assume que usado no mês = fatura
+                  _infoRow('Valor da Fatura', currencyFormat.format(overview.limiteUsado)),
                   _infoRow('Vencimento', '${card.diaVencimento}/${controller.currentDate.month}/${controller.currentDate.year}'),
                 ],
               ),
@@ -295,7 +307,6 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
             const Text("Lançamentos", style: TextStyle(color: AppTheme.textSilver, fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             
-            // Passa o mês selecionado para o título da lista
             CardExpensesListWidget(
               expenses: overview.transacoesMes, 
               selectedMonth: DateFormat('MMMM yyyy', 'pt_BR').format(controller.currentDate)
@@ -306,42 +317,24 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
     );
   }
 
-  // --- WIDGET DO SELETOR DE MÊS (NOVO) ---
+  // --- HELPERS E MODALS ---
+  
   Widget _buildMonthSelector(CreditCardController controller, String token, int userId) {
     final dateFormat = DateFormat('MMMM yyyy', 'pt_BR');
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: AppTheme.borderDark),
-      ),
+      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(30), border: Border.all(color: AppTheme.borderDark)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left, color: AppTheme.neonGreen),
-            onPressed: () => controller.changeInvoiceMonth(token, userId, -1),
-          ),
-          Text(
-            dateFormat.format(controller.currentDate).toUpperCase(),
-            style: const TextStyle(
-              color: AppTheme.textWhite,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              letterSpacing: 1.2
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.chevron_right, color: AppTheme.neonGreen),
-            onPressed: () => controller.changeInvoiceMonth(token, userId, 1),
-          ),
+          IconButton(icon: const Icon(Icons.chevron_left, color: AppTheme.neonGreen), onPressed: () => controller.changeInvoiceMonth(token, userId, -1)),
+          Text(dateFormat.format(controller.currentDate).toUpperCase(), style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1.2)),
+          IconButton(icon: const Icon(Icons.chevron_right, color: AppTheme.neonGreen), onPressed: () => controller.changeInvoiceMonth(token, userId, 1)),
         ],
       ),
     );
   }
 
-  // --- MODALS AUXILIARES ---
   void _confirmDelete(BuildContext context, CreditCardController controller, String token, int userId, String uuid) {
     showDialog(
       context: context,
@@ -365,14 +358,11 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
 
   void _showPayInvoiceDialog(BuildContext context, CreditCardController controller, String token, int userId, int cardId) {
     final valorCtrl = TextEditingController();
-    
-    // Começa com a data que o usuário já estava visualizando na tela
     DateTime selectedDate = controller.currentDate; 
 
     showDialog(
       context: context,
       builder: (ctx) {
-        // StatefulBuilder permite atualizar o estado APENAS dentro do Dialog
         return StatefulBuilder(
           builder: (context, setStateModal) {
             return AlertDialog(
@@ -382,112 +372,49 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 1. INPUT DE VALOR
                   TextField(
                     controller: valorCtrl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     style: const TextStyle(color: AppTheme.textWhite, fontSize: 18, fontWeight: FontWeight.bold),
-                    decoration: const InputDecoration(
-                      labelText: "Valor do Pagamento",
-                      labelStyle: TextStyle(color: AppTheme.textSilver),
-                      prefixText: "R\$ ",
-                      prefixStyle: TextStyle(color: AppTheme.neonGreen),
-                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.borderDark)),
-                      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen)),
-                    ),
+                    decoration: const InputDecoration(labelText: "Valor do Pagamento", labelStyle: TextStyle(color: AppTheme.textSilver), prefixText: "R\$ ", prefixStyle: TextStyle(color: AppTheme.neonGreen), enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.borderDark)), focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppTheme.neonGreen))),
                   ),
                   const SizedBox(height: 24),
-
-                  // 2. SELETOR DE MÊS DE REFERÊNCIA
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Mês de Referência", style: TextStyle(color: AppTheme.textSilver, fontSize: 12)),
-                  ),
+                  const Align(alignment: Alignment.centerLeft, child: Text("Mês de Referência", style: TextStyle(color: AppTheme.textSilver, fontSize: 12))),
                   const SizedBox(height: 8),
-                  
                   InkWell(
                     onTap: () async {
-                      // Seletor de Data (Mês/Ano)
-                      // Nota: O DatePicker padrão seleciona dias, mas usamos apenas Mês/Ano no backend
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2030),
-                        builder: (context, child) {
-                          return Theme(data: AppTheme.lightTheme, child: child!);
-                        },
-                      );
-                      if (picked != null) {
-                        setStateModal(() {
-                          selectedDate = picked;
-                        });
-                      }
+                      final picked = await showDatePicker(context: context, initialDate: selectedDate, firstDate: DateTime(2020), lastDate: DateTime(2030), builder: (context, child) => Theme(data: AppTheme.lightTheme, child: child!));
+                      if (picked != null) setStateModal(() => selectedDate = picked);
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.inputDark,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.borderDark),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            DateFormat('MMMM yyyy', 'pt_BR').format(selectedDate).toUpperCase(),
-                            style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold),
-                          ),
-                          const Icon(Icons.calendar_today, color: AppTheme.neonGreen, size: 18),
-                        ],
-                      ),
+                      decoration: BoxDecoration(color: AppTheme.inputDark, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.borderDark)),
+                      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(DateFormat('MMMM yyyy', 'pt_BR').format(selectedDate).toUpperCase(), style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold)), const Icon(Icons.calendar_today, color: AppTheme.neonGreen, size: 18)]),
                     ),
                   ),
                 ],
               ),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx), 
-                  child: const Text("Cancelar", style: TextStyle(color: AppTheme.neonRed))
-                ),
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancelar", style: TextStyle(color: AppTheme.neonRed))),
                 ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.neonGreen,
-                      foregroundColor: Colors.black,
-                    ),
-                    onPressed: () {
-                      final valor = double.tryParse(valorCtrl.text.replaceAll(',', '.')) ?? 0.0;
-                      
-                      if (valor > 0) {
-                        Navigator.pop(ctx); // Fecha o modal e inicia o processo
-                        
-                        controller.payInvoice(
-                          token, 
-                          userId, 
-                          cardId, 
-                          valor, 
-                          selectedDate.month, 
-                          selectedDate.year
-                        ).then((success) {
-                          if (success) {
-                            KontaSnack.show(context, title: "Sucesso", message: "Pagamento realizado!");
-                          } else {
-                            // --- AQUI ESTÁ A MUDANÇA ---
-                            // Mostra o erro específico que o controller capturou do backend
-                            KontaSnack.show(
-                              context, 
-                              type: KontaSnackType.error, 
-                              title: "Erro", 
-                              message: controller.error ?? "Falha ao processar pagamento."
-                            );
-                          }
-                        });
-                      } else {
-                        KontaSnack.show(context, type: KontaSnackType.warning, title: "Atenção", message: "Insira um valor válido.");
-                      }
-                    }, 
-                    child: const Text("Confirmar Pagamento", style: TextStyle(fontWeight: FontWeight.bold))
-                  ),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.neonGreen, foregroundColor: Colors.black),
+                  onPressed: () {
+                    final valor = double.tryParse(valorCtrl.text.replaceAll(',', '.')) ?? 0.0;
+                    if (valor > 0) {
+                      Navigator.pop(ctx);
+                      controller.payInvoice(token, userId, cardId, valor, selectedDate.month, selectedDate.year).then((success) {
+                        if (success) {
+                          KontaSnack.show(context, title: "Sucesso", message: "Pagamento realizado!");
+                        } else {
+                          KontaSnack.show(context, type: KontaSnackType.error, title: "Erro", message: controller.error ?? "Falha ao processar pagamento.");
+                        }
+                      });
+                    } else {
+                      KontaSnack.show(context, type: KontaSnackType.warning, title: "Atenção", message: "Insira um valor válido.");
+                    }
+                  }, 
+                  child: const Text("Confirmar Pagamento", style: TextStyle(fontWeight: FontWeight.bold))
+                ),
               ],
             );
           },
@@ -496,7 +423,7 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
     );
   }
 
-  // --- HELPERS VISUAIS ---
+  // --- WIDGETS VISUAIS ---
   Widget _summaryCard(String label, String value, Color valueColor) {
     return Container(
       padding: const EdgeInsets.all(16),

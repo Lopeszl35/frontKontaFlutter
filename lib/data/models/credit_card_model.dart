@@ -11,7 +11,7 @@ class CreditCardModel {
   final int diaFechamento;
   final int diaVencimento;
   final Color color;
-  final String corHex;
+  final String? corHex;
   final bool ativo;
 
   CreditCardModel({
@@ -25,7 +25,7 @@ class CreditCardModel {
     required this.diaFechamento,
     required this.diaVencimento,
     required this.color,
-    required this.corHex,
+    this.corHex,
     required this.ativo,
   });
 
