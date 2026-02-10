@@ -85,8 +85,9 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
     return _buildListView(context, controller);
   }
 
-  // ────────── LIST VIEW ──────────
+  // ────────── LIST VIEW (PRINCIPAL) ──────────
   Widget _buildListView(BuildContext context, CreditCardController controller) {
+    // Calcula totais apenas de cartões ativos (opcional, aqui somamos tudo)
     final totalLimit = controller.cards.fold(0.0, (sum, c) => sum + c.limite);
     
     return Scaffold(
@@ -109,6 +110,7 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
+                    // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -124,6 +126,7 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
                     if (controller.cards.isEmpty && !controller.isLoading)
                       _buildEmptyState()
                     else ...[
+                      // Resumo Global
                       Row(
                         children: [
                           Expanded(child: _summaryCard('Total Limite', currencyFormat.format(totalLimit), AppTheme.neonGreen)),
@@ -135,14 +138,18 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
                       const Text('Seus Cartões', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textSilver)),
                       const SizedBox(height: 12),
                       
-                      ...controller.cards.map((card) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: CreditCardItemWidget(
-                          card: card,
-                          onTap: () {
-                            final user = Provider.of<AuthProvider>(context, listen: false).user!;
-                            controller.selectCard(user.token!, user.id, card);
-                          },
+                      // Lista de Cartões com Opacidade se Inativo
+                      ...controller.cards.map((card) => Opacity(
+                        opacity: card.ativo ? 1.0 : 0.5,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: CreditCardItemWidget(
+                            card: card,
+                            onTap: () {
+                              final user = Provider.of<AuthProvider>(context, listen: false).user!;
+                              controller.selectCard(user.token!, user.id, card);
+                            },
+                          ),
                         ),
                       )),
                     ]
@@ -153,7 +160,7 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
     );
   }
 
-  // ────────── DETAIL VIEW ──────────
+  // ────────── DETAIL VIEW (DETALHES) ──────────
   Widget _buildDetailView(BuildContext context, CreditCardController controller, String token, int userId) {
     final card = controller.selectedCard!;
     final overview = controller.cardOverview;
@@ -184,22 +191,22 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
             color: AppTheme.surface,
             onSelected: (value) {
               if (value == 'edit') {
-                // --- IMPLEMENTAÇÃO DA EDIÇÃO ---
+                // EDITAR: Abre o modal reutilizando a lógica de criação
                 showModalBottomSheet(
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
                   builder: (ctx) => AddCardModal(
                     controller: controller,
-                    cardToEdit: card, // Passa o cartão atual para preencher os campos
+                    cardToEdit: card,
                   ),
                 ).then((_) {
-                  // Atualiza a visualização com os dados editados
-                  controller.selectCard(token, userId, card);
+                  controller.selectCard(token, userId, card); // Recarrega após editar
                 });
               } else if (value == 'delete') {
                 _confirmDelete(context, controller, token, userId, card.uuid);
               } else if (value == 'toggle') {
+                // ATIVAR / DESATIVAR
                 controller.toggleActive(token, userId, card.uuid, !card.ativo);
               }
             },
@@ -208,14 +215,24 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
                 value: 'edit',
                 child: Row(children: [Icon(Icons.edit, size: 18, color: AppTheme.textSilver), SizedBox(width: 8), Text('Editar', style: TextStyle(color: AppTheme.textWhite))]),
               ),
+              
+              // ITEM DINÂMICO: ATIVAR OU DESATIVAR
               PopupMenuItem<String>(
                 value: 'toggle',
                 child: Row(children: [
-                  Icon(card.ativo ? Icons.lock : Icons.lock_open, size: 18, color: AppTheme.textSilver), 
+                  Icon(
+                    card.ativo ? Icons.visibility_off : Icons.visibility, 
+                    size: 18, 
+                    color: AppTheme.textSilver
+                  ), 
                   const SizedBox(width: 8), 
-                  Text(card.ativo ? 'Bloquear' : 'Desbloquear', style: const TextStyle(color: AppTheme.textWhite))
+                  Text(
+                    card.ativo ? 'Desativar' : 'Ativar', 
+                    style: const TextStyle(color: AppTheme.textWhite)
+                  )
                 ]),
               ),
+              
               const PopupMenuDivider(),
               const PopupMenuItem<String>(
                 value: 'delete',
@@ -229,15 +246,39 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            // Preview
-            CreditCardItemWidget(card: card, isSelected: true, onTap: () {}),
+            // Preview do Cartão (Opacidade se inativo)
+            Opacity(
+              opacity: card.ativo ? 1.0 : 0.6,
+              child: CreditCardItemWidget(card: card, isSelected: true, onTap: () {})
+            ),
+            
+            // Aviso se estiver desativado
+            if (!card.ativo)
+              Container(
+                margin: const EdgeInsets.only(top: 16),
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.neonRed.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.neonRed.withValues(alpha: 0.5))
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: AppTheme.neonRed),
+                    SizedBox(width: 8),
+                    Text("Cartão Desativado", style: TextStyle(color: AppTheme.neonRed, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+
             const SizedBox(height: 16),
 
             // Filtro de Data
             _buildMonthSelector(controller, token, userId),
             const SizedBox(height: 16),
 
-            // Ações Rápidas
+            // Ações Rápidas (Desabilitadas se inativo? Opcional. Aqui deixei habilitadas)
             Row(
               children: [
                 Expanded(
@@ -274,7 +315,7 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
             ),
             const SizedBox(height: 24),
 
-            // Resumo
+            // Resumo Financeiro
             Row(
               children: [
                 Expanded(child: _summaryCard('Limite Usado', currencyFormat.format(overview.limiteUsado), AppTheme.neonRed)),
@@ -317,7 +358,7 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
     );
   }
 
-  // --- HELPERS E MODALS ---
+  // --- WIDGETS AUXILIARES E MODALS ---
   
   Widget _buildMonthSelector(CreditCardController controller, String token, int userId) {
     final dateFormat = DateFormat('MMMM yyyy', 'pt_BR');
@@ -423,7 +464,7 @@ class _CreditCardsContentState extends State<_CreditCardsContent> {
     );
   }
 
-  // --- WIDGETS VISUAIS ---
+  // --- HELPERS VISUAIS ---
   Widget _summaryCard(String label, String value, Color valueColor) {
     return Container(
       padding: const EdgeInsets.all(16),
