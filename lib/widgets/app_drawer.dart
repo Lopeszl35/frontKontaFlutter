@@ -6,6 +6,7 @@ import 'package:konta_app/modules/auth/login_page.dart';
 import 'package:konta_app/modules/dashboard/pages/dashboard_page.dart';
 import 'package:konta_app/modules/expenses/pages/variable_expenses_page.dart';
 import 'package:konta_app/modules/creditCards/pages/credit_cards_screen.dart';
+import 'package:konta_app/modules/financings/pages/financings_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -84,6 +85,18 @@ class AppDrawer extends StatelessWidget {
                 ),
 
                  _buildMenuItem(
+                  context,
+                  icon: Icons.credit_card_outlined,
+                  title: "Financiamentos",
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const FinancingsScreen()),
+                    );
+                  },
+                ),
+
+                _buildMenuItem(
                   context,
                   icon: Icons.credit_card_outlined,
                   title: "Cartões de crédito",

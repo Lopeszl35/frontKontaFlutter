@@ -19,10 +19,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final url = Uri.parse('$_baseUrl/loginUser');
-
-      print("📡 Logando em: $url");
-      
+      final url = Uri.parse('$_baseUrl/loginUser');      
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
@@ -31,9 +28,6 @@ class AuthProvider extends ChangeNotifier {
           "senha": password // Seu backend espera "senha", não "password"
         }),
       );
-
-      print("🔙 Status Login: ${response.statusCode}");
-      print("🔙 Body Login: ${response.body}");
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -47,7 +41,6 @@ class AuthProvider extends ChangeNotifier {
         throw Exception("Credenciais inválidas");
       }
     } catch (e) {
-      print("❌ Erro Login: $e");
       _isLoading = false;
       notifyListeners();
       return false;
@@ -86,8 +79,6 @@ class AuthProvider extends ChangeNotifier {
         }
       };
 
-      print("📡 Enviando Cadastro: ${jsonEncode(payload)}");
-
       final response = await http.post(
         url,
         headers: {
@@ -102,9 +93,6 @@ class AuthProvider extends ChangeNotifier {
       // SUCESSO (200 ou 201)
       if (response.statusCode == 201 || response.statusCode == 200) {
         final userData = body['data'];
-        
-        // CORREÇÃO CRÍTICA AQUI:
-        // Pegamos o token real que o backend mandou dentro de 'data'
         final String tokenReal = userData['token']; 
 
         // Montamos o objeto para o UserModel
@@ -119,8 +107,6 @@ class AuthProvider extends ChangeNotifier {
              "saldo_inicial": double.tryParse(userData['saldo_inicial'].toString()) ?? 0.0,
           }
         };
-
-        // Passamos o tokenReal. Agora o UserModel tem a chave válida!
         _user = UserModel.fromJson(jsonParaModel, tokenReal);
         
         _isLoading = false;
@@ -143,7 +129,6 @@ class AuthProvider extends ChangeNotifier {
       }
 
     } catch (e) {
-      print("❌ Erro Cadastro: $e");
       _isLoading = false;
       notifyListeners();
       rethrow;

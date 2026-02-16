@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import 'package:konta_app/core/theme/app_theme.dart';
 import 'package:konta_app/core/utils/formatters.dart';
 import 'package:konta_app/modules/expenses/controllers/variable_expenses_controller.dart';
@@ -9,14 +10,9 @@ class ExpensesSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Uso correto do DateFormat (pt_BR deve estar inicializado no main ou na page)
+    final mesFormatado = DateFormat('MMMM yyyy', 'pt_BR').format(DateTime.now()).toUpperCase();
 
-    final now = DateTime.now();
-    final meses = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-    ];
-    final mesFormatado = '${meses[now.month - 1]}/${now.year}';
-
-    // Usamos Consumer para reconstruir APENAS este widget quando os dados mudarem
     return Consumer<VariableExpensesController>(
       builder: (context, controller, _) {
         final progressoTotal = controller.limiteMensal > 0 
@@ -32,20 +28,20 @@ class ExpensesSummaryCard extends StatelessWidget {
             border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.primaryModern.withValues(alpha: 0.4), 
-                blurRadius: 30, 
-                offset: const Offset(0, 10)
+                color: Colors.black.withValues(alpha: 0.4),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cabeçalho do Card
+              // Cabeçalho
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(mesFormatado, style: const TextStyle(color: AppTheme.textSilver, fontSize: 14, fontWeight: FontWeight.w500)),
+                  Text(mesFormatado, style: const TextStyle(color: AppTheme.textSilver, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 1)),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(20)),
@@ -58,16 +54,26 @@ class ExpensesSummaryCard extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               
-              // Valores Gasto vs Meta
+              // Valores Principais
               Row(
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("GASTO", style: TextStyle(color: AppTheme.textSilver, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                        const Text("GASTO ATUAL", style: TextStyle(color: AppTheme.textSilver, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
                         const SizedBox(height: 4),
-                        Text(Formatters.formatMoney(controller.gastoTotalMes), style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                        // HERO AQUI: Se clicar para ver detalhes, este valor voa
+                        Hero(
+                          tag: 'expenses_total_balance',
+                          child: Material(
+                            color: Colors.transparent,
+                            child: Text(
+                              Formatters.formatMoney(controller.gastoTotalMes), 
+                              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -78,9 +84,12 @@ class ExpensesSummaryCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("META", style: TextStyle(color: AppTheme.textSilver, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                          const Text("META MENSAL", style: TextStyle(color: AppTheme.textSilver, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
                           const SizedBox(height: 4),
-                          Text(Formatters.formatMoney(controller.limiteMensal), style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                          Text(
+                            Formatters.formatMoney(controller.limiteMensal), 
+                            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)
+                          ),
                         ],
                       ),
                     ),
@@ -103,7 +112,7 @@ class ExpensesSummaryCard extends StatelessWidget {
               
               const SizedBox(height: 16),
               
-              // Saldo Restante
+              // Rodapé com Saldo
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -113,7 +122,7 @@ class ExpensesSummaryCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Saldo Restante:", style: TextStyle(color: AppTheme.textSilver, fontSize: 13)),
+                    const Text("Disponível:", style: TextStyle(color: AppTheme.textSilver, fontSize: 13)),
                     Text(
                       Formatters.formatMoney(saldoRestante),
                       style: TextStyle(

@@ -22,15 +22,22 @@ class _AddCardExpenseModalState extends State<AddCardExpenseModal> {
   
   DateTime _selectedDate = DateTime.now();
   String _selectedCategory = 'Outros';
-  bool _isInstallment = false; // parcelado
-  int _installmentsCount = 2; // numeroParcelas
+  bool _isInstallment = false;
+  int _installmentsCount = 2;
 
-  final List<String> _categories = [
+  final List<String> _categories = const [
     'Alimentação', 'Transporte', 'Lazer', 'Assinaturas', 
     'Saúde', 'Educação', 'Casa', 'Outros'
   ];
 
-  // Helper para calcular o valor da parcela em tempo real
+  @override
+  void dispose() {
+    _descCtrl.dispose();
+    _valorCtrl.dispose();
+    super.dispose();
+  }
+
+  // Lógica de UI pura
   String _getParcelaValue() {
     if (_valorCtrl.text.isEmpty) return "R\$ 0,00";
     try {
@@ -42,267 +49,19 @@ class _AddCardExpenseModalState extends State<AddCardExpenseModal> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      resizeToAvoidBottomInset: true,
-      body: Align(
-        alignment: Alignment.bottomCenter,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(24, 30, 24, 30),
-          decoration: const BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-            border: Border(top: BorderSide(color: AppTheme.borderDark)),
-          ),
-          child: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Cabeçalho
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppTheme.inputDark, 
-                          borderRadius: BorderRadius.circular(12)
-                        ),
-                        child: const Icon(Icons.add_card, color: AppTheme.neonBlue),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        "Novo Gasto",
-                        style: TextStyle(
-                          color: AppTheme.textWhite, 
-                          fontSize: 18, 
-                          fontWeight: FontWeight.bold
-                        ),
-                      ),
-                      const Spacer(),
-                      InkWell(
-                        onTap: () => Navigator.pop(context), 
-                        child: const Icon(Icons.close, color: AppTheme.textSilver)
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Valor
-                  TextFormField(
-                    controller: _valorCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: const TextStyle(color: AppTheme.textWhite, fontSize: 24, fontWeight: FontWeight.bold),
-                    // Atualiza a tela ao digitar para recalcular a parcela
-                    onChanged: (_) {
-                      if (_isInstallment) setState(() {});
-                    },
-                    decoration: const InputDecoration(
-                      prefixText: "R\$ ",
-                      prefixStyle: TextStyle(color: AppTheme.primaryModern, fontSize: 24, fontWeight: FontWeight.bold),
-                      hintText: "0,00",
-                      hintStyle: TextStyle(color: AppTheme.textSilver),
-                      filled: true, fillColor: Colors.transparent,
-                      border: InputBorder.none,
-                    ),
-                    validator: (v) {
-                      final val = double.tryParse(v?.replaceAll(',', '.') ?? '');
-                      if (val == null || val <= 0) return 'Valor inválido';
-                      return null;
-                    },
-                  ),
-                  const Divider(color: AppTheme.borderDark),
-                  const SizedBox(height: 16),
-
-                  // Descrição
-                  TextFormField(
-                    controller: _descCtrl,
-                    style: const TextStyle(color: AppTheme.textWhite),
-                    maxLength: 255,
-                    decoration: InputDecoration(
-                      labelText: "Descrição",
-                      counterText: "",
-                      prefixIcon: const Icon(Icons.edit, color: AppTheme.textSilver),
-                      filled: true, fillColor: AppTheme.inputDark,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                    ),
-                    validator: (v) => (v == null || v.length < 2) ? 'Mínimo 2 caracteres' : null,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Categoria e Data (Linha com Overflow Corrigido)
-                  Row(
-                    children: [
-                      // Data
-                      Expanded(
-                        flex: 4,
-                        child: InkWell(
-                          onTap: _pickDate,
-                          child: Container(
-                            // CORREÇÃO: Padding reduzido para evitar overflow
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-                            decoration: BoxDecoration(
-                              color: AppTheme.inputDark,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.calendar_today, size: 16, color: AppTheme.textSilver),
-                                const SizedBox(width: 6),
-                                Expanded( // Garante que o texto não estoure
-                                  child: Text(
-                                    DateFormat('dd/MM/yyyy').format(_selectedDate),
-                                    style: const TextStyle(color: AppTheme.textWhite, fontSize: 13),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8), // Espaçamento reduzido
-                      
-                      // Categoria Dropdown
-                      Expanded(
-                        flex: 6,
-                        child: Container(
-                          // CORREÇÃO: Padding reduzido
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          decoration: BoxDecoration(color: AppTheme.inputDark, borderRadius: BorderRadius.circular(16)),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _selectedCategory,
-                              dropdownColor: AppTheme.surface,
-                              icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textSilver),
-                              style: const TextStyle(color: AppTheme.textWhite, fontSize: 13),
-                              isExpanded: true, // Garante que ocupa o espaço sem estourar
-                              items: _categories.map((c) => DropdownMenuItem(
-                                value: c, 
-                                child: Text(c, overflow: TextOverflow.ellipsis)
-                              )).toList(),
-                              onChanged: (v) => setState(() => _selectedCategory = v!),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Toggle Parcelado
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: _isInstallment ? AppTheme.neonBlue : AppTheme.borderDark),
-                      borderRadius: BorderRadius.circular(16),
-                      color: _isInstallment ? AppTheme.neonBlue.withValues(alpha: 0.1) : Colors.transparent,
-                    ),
-                    child: SwitchListTile(
-                      title: const Text("Compra Parcelada?", style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14)),
-                      subtitle: Text(_isInstallment ? "Selecione as parcelas" : "Pagamento à vista (1x)", style: const TextStyle(color: AppTheme.textSilver, fontSize: 12)),
-                      value: _isInstallment,
-                      activeColor: AppTheme.neonBlue,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (val) => setState(() => _isInstallment = val),
-                    ),
-                  ),
-
-                  // Seletor de Parcelas + Valor Calculado
-                  if (_isInstallment) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.inputDark,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          value: _installmentsCount,
-                          dropdownColor: AppTheme.inputDark,
-                          isExpanded: true,
-                          icon: const Icon(Icons.layers, color: AppTheme.neonBlue),
-                          style: const TextStyle(color: AppTheme.textWhite, fontSize: 16),
-                          items: List.generate(59, (index) => index + 2).map((i) {
-                            return DropdownMenuItem(value: i, child: Text("$i vezes"));
-                          }).toList(),
-                          onChanged: (v) => setState(() => _installmentsCount = v!),
-                        ),
-                      ),
-                    ),
-                    
-                    // Exibição do valor da parcela
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8, left: 8),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.info_outline, size: 14, color: AppTheme.textSilver),
-                          const SizedBox(width: 6),
-                          Text(
-                            "Cada parcela será de ", 
-                            style: TextStyle(color: AppTheme.textSilver.withValues(alpha: 0.8), fontSize: 12)
-                          ),
-                          Text(
-                            _getParcelaValue(),
-                            style: const TextStyle(color: AppTheme.neonBlue, fontWeight: FontWeight.bold, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 32),
-
-                  // Botão Salvar
-                  Consumer<CreditCardController>(
-                    builder: (context, controller, _) {
-                      return ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.neonBlue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        onPressed: controller.isLoading ? null : () => _submit(controller),
-                        child: controller.isLoading
-                            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : const Text("ADICIONAR LANÇAMENTO", style: TextStyle(fontWeight: FontWeight.bold)),
-                      );
-                    }
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      builder: (context, child) => Theme(data: AppTheme.lightTheme, child: child!),
-    );
-    if (picked != null) setState(() => _selectedDate = picked);
-  }
-
   Future<void> _submit(CreditCardController controller) async {
     if (!_formKey.currentState!.validate()) return;
 
-    final user = Provider.of<AuthProvider>(context, listen: false).user!;
+    // Fecha teclado
+    FocusScope.of(context).unfocus();
+
+    final user = Provider.of<AuthProvider>(context, listen: false).user;
+    if (user == null || user.token == null) return;
+
     final valor = double.parse(_valorCtrl.text.replaceAll(',', '.'));
 
     final Map<String, dynamic> payload = {
-      "descricao": _descCtrl.text,
+      "descricao": _descCtrl.text.trim(),
       "categoria": _selectedCategory,
       "valorTotal": valor,
       "dataCompra": DateFormat('yyyy-MM-dd').format(_selectedDate),
@@ -317,10 +76,13 @@ class _AddCardExpenseModalState extends State<AddCardExpenseModal> {
       payload
     );
 
-    if (success && mounted) {
+    // Verificação de segurança de contexto (Async Gap)
+    if (!mounted) return;
+
+    if (success) {
       KontaSnack.show(context, title: "Sucesso", message: "Gasto lançado no cartão!");
       Navigator.pop(context);
-    } else if (mounted) {
+    } else {
       KontaSnack.show(
         context, 
         type: KontaSnackType.error, 
@@ -328,5 +90,234 @@ class _AddCardExpenseModalState extends State<AddCardExpenseModal> {
         message: controller.error ?? "Falha ao lançar gasto."
       );
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Usamos Consumer para reconstruir o botão de acordo com o loading
+    return Consumer<CreditCardController>(
+      builder: (context, controller, _) {
+        return Container(
+          padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+          decoration: const BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            border: Border(top: BorderSide(color: AppTheme.borderDark)),
+          ),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildHeader(context),
+                  const SizedBox(height: 24),
+                  _buildValueInput(),
+                  const Divider(color: AppTheme.borderDark),
+                  const SizedBox(height: 16),
+                  _buildDescriptionInput(),
+                  const SizedBox(height: 16),
+                  _buildDateAndCategoryRow(),
+                  const SizedBox(height: 20),
+                  _buildInstallmentToggle(),
+                  if (_isInstallment) ...[
+                    const SizedBox(height: 12),
+                    _buildInstallmentSelector(),
+                  ],
+                  const SizedBox(height: 32),
+                  _buildSubmitButton(controller),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: AppTheme.inputDark, borderRadius: BorderRadius.circular(12)),
+          child: const Icon(Icons.add_card, color: AppTheme.neonBlue),
+        ),
+        const SizedBox(width: 12),
+        const Text("Novo Gasto", style: TextStyle(color: AppTheme.textWhite, fontSize: 18, fontWeight: FontWeight.bold)),
+        const Spacer(),
+        InkWell(
+          onTap: () => Navigator.pop(context), 
+          child: const Icon(Icons.close, color: AppTheme.textSilver)
+        )
+      ],
+    );
+  }
+
+  Widget _buildValueInput() {
+    return TextFormField(
+      controller: _valorCtrl,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      style: const TextStyle(color: AppTheme.textWhite, fontSize: 24, fontWeight: FontWeight.bold),
+      onChanged: (_) { if (_isInstallment) setState(() {}); },
+      decoration: const InputDecoration(
+        prefixText: "R\$ ",
+        prefixStyle: TextStyle(color: AppTheme.primaryModern, fontSize: 24, fontWeight: FontWeight.bold),
+        hintText: "0,00",
+        hintStyle: TextStyle(color: AppTheme.textSilver),
+        filled: true, fillColor: Colors.transparent,
+        border: InputBorder.none,
+      ),
+      validator: (v) {
+        final val = double.tryParse(v?.replaceAll(',', '.') ?? '');
+        if (val == null || val <= 0) return 'Valor inválido';
+        return null;
+      },
+    );
+  }
+
+  Widget _buildDescriptionInput() {
+    return TextFormField(
+      controller: _descCtrl,
+      style: const TextStyle(color: AppTheme.textWhite),
+      maxLength: 255,
+      decoration: InputDecoration(
+        labelText: "Descrição",
+        counterText: "",
+        prefixIcon: const Icon(Icons.edit, color: AppTheme.textSilver),
+        filled: true, fillColor: AppTheme.inputDark,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      ),
+      validator: (v) => (v == null || v.trim().length < 2) ? 'Mínimo 2 caracteres' : null,
+    );
+  }
+
+  Widget _buildDateAndCategoryRow() {
+    return Row(
+      children: [
+        Expanded(
+          flex: 4,
+          child: InkWell(
+            onTap: _pickDate,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              decoration: BoxDecoration(color: AppTheme.inputDark, borderRadius: BorderRadius.circular(16)),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today, size: 16, color: AppTheme.textSilver),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      DateFormat('dd/MM/yyyy').format(_selectedDate),
+                      style: const TextStyle(color: AppTheme.textWhite, fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 6,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(color: AppTheme.inputDark, borderRadius: BorderRadius.circular(16)),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedCategory,
+                dropdownColor: AppTheme.surface,
+                icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textSilver),
+                style: const TextStyle(color: AppTheme.textWhite, fontSize: 13),
+                isExpanded: true,
+                items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis))).toList(),
+                onChanged: (v) => setState(() => _selectedCategory = v!),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInstallmentToggle() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: _isInstallment ? AppTheme.neonBlue : AppTheme.borderDark),
+        borderRadius: BorderRadius.circular(16),
+        color: _isInstallment ? AppTheme.neonBlue.withValues(alpha: 0.1) : Colors.transparent,
+      ),
+      child: SwitchListTile(
+        title: const Text("Compra Parcelada?", style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14)),
+        subtitle: Text(_isInstallment ? "Selecione as parcelas" : "Pagamento à vista (1x)", style: const TextStyle(color: AppTheme.textSilver, fontSize: 12)),
+        value: _isInstallment,
+        activeThumbColor : AppTheme.neonBlue,
+        contentPadding: EdgeInsets.zero,
+        onChanged: (val) => setState(() => _isInstallment = val),
+      ),
+    );
+  }
+
+  Widget _buildInstallmentSelector() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: AppTheme.inputDark, borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DropdownButtonHideUnderline(
+            child: DropdownButton<int>(
+              value: _installmentsCount,
+              dropdownColor: AppTheme.inputDark,
+              isExpanded: true,
+              icon: const Icon(Icons.layers, color: AppTheme.neonBlue),
+              style: const TextStyle(color: AppTheme.textWhite, fontSize: 16),
+              items: List.generate(59, (index) => index + 2).map((i) {
+                return DropdownMenuItem(value: i, child: Text("$i vezes"));
+              }).toList(),
+              onChanged: (v) => setState(() => _installmentsCount = v!),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.info_outline, size: 14, color: AppTheme.textSilver),
+              const SizedBox(width: 6),
+              Text("Cada parcela: ", style: TextStyle(color: AppTheme.textSilver.withValues(alpha: 0.8), fontSize: 12)),
+              Text(_getParcelaValue(), style: const TextStyle(color: AppTheme.neonBlue, fontWeight: FontWeight.bold, fontSize: 12)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton(CreditCardController controller) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppTheme.neonBlue,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      onPressed: controller.isLoading ? null : () => _submit(controller),
+      child: controller.isLoading
+          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+          : const Text("ADICIONAR LANÇAMENTO", style: TextStyle(fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) => Theme(data: AppTheme.lightTheme, child: child!),
+    );
+    if (picked != null) setState(() => _selectedDate = picked);
   }
 }

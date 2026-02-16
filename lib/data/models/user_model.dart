@@ -6,7 +6,8 @@ class UserModel {
   final double salarioMensal;
   final double saldoAtual;
   final double saldoInicial;
-  final String? token; // O token pode vir separado ou junto, vamos guardar aqui
+  final String? token;
+  final String planType; 
 
   UserModel({
     required this.id,
@@ -17,16 +18,18 @@ class UserModel {
     required this.saldoAtual,
     required this.saldoInicial,
     this.token,
+    this.planType = 'free', 
   });
 
-  // Factory: O "tradutor" que pega o JSON (Map) e transforma em Objeto Dart
+  // Getters inteligentes para facilitar a lógica na UI (Clean Code)
+  bool get isPremium => planType == 'premium' || planType == 'founder';
+  bool get isFree => planType == 'free';
+
   factory UserModel.fromJson(Map<String, dynamic> json, String tokenRecebido) {
-    // A estrutura do JSON de login tem um objeto "user" dentro.
-    // Vamos acessar json['user'] para pegar os dados.
     final userMap = json['user'];
 
     return UserModel(
-      id: userMap['id_usuario'] ?? 0, // Se vier null, assume 0 (segurança)
+      id: userMap['id_usuario'] ?? 0,
       nome: userMap['nome'] ?? '',
       email: userMap['email'] ?? '',
       perfilFinanceiro: userMap['perfil_financeiro'] ?? 'moderado',
@@ -34,6 +37,7 @@ class UserModel {
       saldoAtual: (userMap['saldo_atual'] ?? 0).toDouble(),
       saldoInicial: (userMap['saldo_inicial'] ?? 0).toDouble(),
       token: tokenRecebido,
+      planType: userMap['plan_type'] ?? 'free', 
     );
   }
 }

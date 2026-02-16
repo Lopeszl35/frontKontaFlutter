@@ -78,7 +78,7 @@ class CreditCardRepository {
   // 7. PATCH: Ativar/Desativar
   Future<bool> toggleActive(String token, int userId, String cardUuid, bool ativar) async {
     final uri = Uri.parse('$_baseUrl/api/cartoes/$userId/$cardUuid/ativar?ativar=$ativar');
-    final response = await http.patch(uri, headers: _headers(token));
+    final response = await http.put(uri, headers: _headers(token));
 
     ApiErrorHandler.check(response);
     return true;

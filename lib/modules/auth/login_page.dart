@@ -206,7 +206,7 @@ class _LoginPageState extends State<LoginPage> {
                                     child: const Text(
                                       "Cadastre-se",
                                       style: TextStyle(
-                                        color: AppTheme.neonBlue,
+                                        color: AppTheme.primaryModern,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -236,7 +236,7 @@ class _LoginPageState extends State<LoginPage> {
                           Text(
                             "Nexor",
                             style: TextStyle(
-                              color: AppTheme.primaryModern.withValues(alpha: 0.8), 
+                              color: AppTheme.neonBlue.withValues(alpha: 0.8), 
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                               letterSpacing: 1,
