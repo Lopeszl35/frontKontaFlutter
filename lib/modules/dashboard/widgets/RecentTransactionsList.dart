@@ -6,10 +6,12 @@ import 'package:konta_app/modules/dashboard/widgets/TransactionItem.dart';
 class RecentTransactionsList extends StatelessWidget {
   final List<TransacaoFeed> transactions;
   final VoidCallback onViewAllTap;
+  final bool showValues;
 
   const RecentTransactionsList({
     super.key,
     required this.transactions,
+    required this.showValues,
     required this.onViewAllTap,
   });
 

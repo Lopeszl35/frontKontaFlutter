@@ -6,7 +6,6 @@ class TransactionItem extends StatelessWidget {
   final String title;
   final String category;
   final double value;
-  // final IconData icon; // REMOVIDO: O ícone agora é definido pelo tipo (receita/despesa)
   final String type; // 'receita' ou 'despesa'
   
 
@@ -15,7 +14,6 @@ class TransactionItem extends StatelessWidget {
     required this.title,
     required this.category,
     required this.value,
-    // required this.icon, // Removido
     required this.type,
   });
 
@@ -24,7 +22,6 @@ class TransactionItem extends StatelessWidget {
     final isNegative = type == 'despesa';
     final displayValue = isNegative ? -value.abs() : value.abs();
     final color = isNegative ? AppTheme.neonRed : AppTheme.neonGreen;
-    // Ícone definido automaticamente pelo tipo
     final typeIcon = isNegative ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded;
 
     return Container(
@@ -48,7 +45,7 @@ class TransactionItem extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(
                     children: [
-                      // --- ÍCONE INDICADOR (O que você pediu) ---
+                      // --- ÍCONE INDICADOR ---
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(

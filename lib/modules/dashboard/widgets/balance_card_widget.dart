@@ -6,17 +6,18 @@ class BalanceCardWidget extends StatelessWidget {
   final double saldoTotal;
   final double receitasMes;
   final double despesasMes;
+  final bool showValues; // Novo parâmetro
 
   const BalanceCardWidget({
     super.key,
     required this.saldoTotal,
     required this.receitasMes,
     required this.despesasMes,
+    required this.showValues,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Cálculo do Fluxo de Caixa do Mês (Net Cash Flow)
     final double balancoMensal = receitasMes - despesasMes;
     final bool isPositivo = balancoMensal >= 0;
 
@@ -24,73 +25,67 @@ class BalanceCardWidget extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        // Gradiente Premium do seu tema
         gradient: AppTheme.premiumGradient, 
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.neonGreen.withValues(alpha: 0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(28), // Mais arredondado (estilo iOS 17)
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- HEADER: Ícone e Título ---
+          // Header mais sutil
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.account_balance_wallet, color: Colors.white, size: 18),
+              Row(
+                children: [
+                  Icon(Icons.account_balance_wallet_outlined, color: Colors.white.withValues(alpha: 0.7), size: 20),
+                  const SizedBox(width: 8),
+                  Text("Saldo Total", style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14)),
+                ],
               ),
-              const SizedBox(width: 10),
-              Text(
-                "Saldo Total",
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              if (!showValues)
+                const Icon(Icons.lock_outline, color: Colors.white30, size: 16),
             ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // --- VALOR PRINCIPAL (SALDO) ---
-          Text(
-            Formatters.formatMoney(saldoTotal),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 36, // Fonte maior para impacto
-              fontWeight: FontWeight.bold,
-              letterSpacing: -1.0,
-            ),
           ),
 
           const SizedBox(height: 16),
 
-          // --- INSIGHT: BALANÇO DO MÊS (Substitui os botões) ---
+          // VALOR COM PRIVACIDADE
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: showValues
+                ? Text(
+                    Formatters.formatMoney(saldoTotal),
+                    key: const ValueKey(1),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 34, // Tipografia grande e limpa
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -1.0,
+                    ),
+                  )
+                : Container(
+                    key: const ValueKey(2),
+                    height: 38,
+                    width: 140,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Balanço (Pílula)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.2), // Fundo escuro sutil
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isPositivo 
-                    ? AppTheme.neonGreen.withValues(alpha: 0.3) 
-                    : AppTheme.neonRed.withValues(alpha: 0.3),
-              ),
+              color: Colors.black.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(20), // Pill shape
             ),
             child: Row(
-              mainAxisSize: MainAxisSize.min, // Ocupa apenas o espaço necessário
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   isPositivo ? Icons.trending_up : Icons.trending_down,
@@ -99,16 +94,12 @@ class BalanceCardWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  isPositivo ? "Superávit este mês" : "Déficit este mês",
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 12,
-                  ),
+                  isPositivo ? "Superávit" : "Déficit",
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
                 Text(
-                  // Mostra o valor absoluto (sem sinal de menos duplicado)
-                  Formatters.formatMoney(balancoMensal.abs()), 
+                  showValues ? Formatters.formatMoney(balancoMensal.abs()) : "••••",
                   style: TextStyle(
                     color: isPositivo ? AppTheme.neonGreen : AppTheme.neonRed,
                     fontSize: 12,

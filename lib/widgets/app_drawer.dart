@@ -14,17 +14,127 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
+    final version = "v1.0.0 (Beta)"; // Idealmente viria do package_info_plus
 
     return Drawer(
-      backgroundColor: AppTheme.surface, 
+      backgroundColor: AppTheme.background, // Fundo escuro total para imersão
       child: Column(
         children: [
-          // --- 1. CABEÇALHO ---
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(
-              gradient: AppTheme.premiumGradient,
+          // --- 1. CABEÇALHO CUSTOMIZADO (PREMIUM) ---
+          _buildCustomHeader(user),
+
+          // --- 2. LISTA DE NAVEGAÇÃO ---
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              children: [
+                _buildSectionTitle("Visão Geral"),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.dashboard_outlined,
+                  title: "Dashboard",
+                  color: Colors.white,
+                  onTap: () => _navigate(context, const DashboardPage()),
+                ),
+
+                const SizedBox(height: 24),
+                _buildSectionTitle("Gestão Financeira"),
+                
+                _buildMenuItem(
+                  context,
+                  icon: Icons.pie_chart_outline_rounded,
+                  title: "Gastos Variáveis",
+                  color: AppTheme.neonOrange,
+                  onTap: () => _navigate(context, const VariableExpensesPage()),
+                ),
+                
+                _buildMenuItem(
+                  context,
+                  icon: Icons.account_balance_wallet_outlined,
+                  title: "Receitas",
+                  color: AppTheme.neonGreen,
+                  onTap: () {
+                    // TODO: Navegar para Receitas
+                    Navigator.pop(context);
+                  },
+                ),
+
+                _buildMenuItem(
+                  context,
+                  icon: Icons.vpn_key_outlined,
+                  title: "Financiamentos",
+                  color: AppTheme.neonBlue,
+                  onTap: () => _navigate(context, const FinancingsScreen()),
+                ),
+
+                _buildMenuItem(
+                  context,
+                  icon: Icons.credit_card_outlined,
+                  title: "Cartões de Crédito",
+                  color: Colors.purpleAccent,
+                  onTap: () => _navigate(context, const CreditCardsScreen()),
+                ),
+
+                const SizedBox(height: 24),
+                _buildSectionTitle("Sistema"),
+
+                _buildMenuItem(
+                  context,
+                  icon: Icons.settings_outlined,
+                  title: "Configurações",
+                  color: AppTheme.textSilver,
+                  onTap: () {
+                    // TODO: Configurações
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
             ),
-            currentAccountPicture: CircleAvatar(
+          ),
+
+          // --- 3. RODAPÉ (LOGOUT + VERSÃO) ---
+          _buildFooter(context, version),
+        ],
+      ),
+    );
+  }
+
+  // Helper para navegação limpa
+  void _navigate(BuildContext context, Widget page) {
+    Navigator.pop(context); // Fecha o drawer
+    // Usa pushReplacement se for Dashboard para não empilhar, push normal para outros
+    if (page is DashboardPage) {
+      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => page));
+    } else {
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+    }
+  }
+
+  Widget _buildCustomHeader(dynamic user) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        border: const Border(bottom: BorderSide(color: AppTheme.borderDark)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Row(
+        children: [
+          // Avatar com Borda Gradiente
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: AppTheme.premiumGradient, // Borda premium
+            ),
+            child: CircleAvatar(
+              radius: 28,
               backgroundColor: AppTheme.background,
               child: Text(
                 user?.nome.substring(0, 1).toUpperCase() ?? "U",
@@ -35,124 +145,116 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
             ),
-            accountName: Text(
-              user?.nome ?? "Usuário",
-              style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textWhite),
-            ),
-            accountEmail: Text(
-              user?.email ?? "email@konta.com",
-              style: const TextStyle(color: AppTheme.textSilver),
-            ),
           ),
-
-          // --- 2. ITENS DE NAVEGAÇÃO ---
+          const SizedBox(width: 16),
+          // Info do Usuário
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildMenuItem(
-                  context,
-                  icon: Icons.dashboard_outlined,
-                  title: "Dashboard",
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const DashboardPage()),
-                    );
-                  },
+                Text(
+                  user?.nome ?? "Usuário",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textWhite,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                
-                _buildMenuItem(
-                  context,
-                  icon: Icons.pie_chart_outline_rounded,
-                  title: "Gastos Variáveis",
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const VariableExpensesPage()),
-                    );
-                  },
+                const SizedBox(height: 4),
+                Text(
+                  user?.email ?? "email@konta.com",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSilver,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-
-                _buildMenuItem(
-                  context,
-                  icon: Icons.account_balance_wallet_outlined,
-                  title: "Receitas",
-                  onTap: () {
-                      Navigator.pop(context);
-                      // TODO: Navegar para Receitas
-                  },
-                ),
-
-                 _buildMenuItem(
-                  context,
-                  icon: Icons.credit_card_outlined,
-                  title: "Financiamentos",
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const FinancingsScreen()),
-                    );
-                  },
-                ),
-
-                _buildMenuItem(
-                  context,
-                  icon: Icons.credit_card_outlined,
-                  title: "Cartões de crédito",
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const CreditCardsScreen()),
-                    );
-                  },
-                ),
-
-                
-                
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  child: Divider(color: AppTheme.borderDark),
-                ),
-                
-                _buildMenuItem(
-                  context,
-                  icon: Icons.settings_outlined,
-                  title: "Configurações",
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Navegar para Configurações
-                  },
-                ),
+                const SizedBox(height: 6),
+                // Badge "Free" ou "Pro" (Placeholder para monetização futura)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.inputDark,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppTheme.borderDark),
+                  ),
+                  child: const Text(
+                    "PLANO FREE",
+                    style: TextStyle(fontSize: 10, color: AppTheme.textSilver, fontWeight: FontWeight.bold),
+                  ),
+                )
               ],
             ),
-          ),
+          )
+        ],
+      ),
+    );
+  }
 
-          // --- 3. BOTÃO DE SAIR (Rodapé) ---
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Divider(color: AppTheme.borderDark),
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, bottom: 8),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          color: AppTheme.textSilver.withValues(alpha: 0.5),
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(BuildContext context, {
+    required IconData icon,
+    required String title,
+    required Color color, // Cor semântica obrigatória
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        // Efeito visual no toque
+        splashColor: color.withValues(alpha: 0.1), 
+        
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1), // Fundo "Neon Glow"
+            borderRadius: BorderRadius.circular(12),
           ),
-          
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            // Ícone de Sair com container Vermelho Translúcido
-            leading: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppTheme.neonRed.withValues(alpha: 0.1), // Fundo vermelho suave
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.neonRed.withValues(alpha: 0.2)),
-              ),
-              child: const Icon(Icons.logout, color: AppTheme.neonRed, size: 20),
-            ),
-            title: const Text(
-              "Sair da conta",
-              style: TextStyle(
-                color: AppTheme.neonRed,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          child: Icon(icon, color: color, size: 22),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
+          ),
+        ),
+        trailing: Icon(Icons.chevron_right, size: 18, color: AppTheme.textSilver.withValues(alpha: 0.5)),
+      ),
+    );
+  }
+
+  Widget _buildFooter(BuildContext context, String version) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppTheme.borderDark)),
+        color: AppTheme.surface,
+      ),
+      child: Column(
+        children: [
+          // Botão Sair com estilo de alerta
+          InkWell(
             onTap: () {
               Provider.of<AuthProvider>(context, listen: false).logout();
               Navigator.of(context).pushAndRemoveUntil(
@@ -160,41 +262,38 @@ class AppDrawer extends StatelessWidget {
                 (route) => false,
               );
             },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppTheme.neonRed.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(12),
+                color: AppTheme.neonRed.withValues(alpha: 0.05),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.logout, size: 20, color: AppTheme.neonRed),
+                  SizedBox(width: 8),
+                  Text(
+                    "Sair da Conta",
+                    style: TextStyle(
+                      color: AppTheme.neonRed,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
+          Text(
+            "Konta App $version",
+            style: TextStyle(color: AppTheme.textSilver.withValues(alpha: 0.4), fontSize: 11),
+          ),
         ],
       ),
-    );
-  }
-
-  // --- WIDGET AUXILIAR COM BORDA ARREDONDA ---
-  Widget _buildMenuItem(BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-      // AQUI ESTÁ A MUDANÇA: Container em volta do ícone
-      leading: Container(
-        padding: const EdgeInsets.all(10), // Espaço interno
-        decoration: BoxDecoration(
-          color: AppTheme.inputDark, // Fundo do ícone (Slate mais escuro)
-          borderRadius: BorderRadius.circular(12), // Borda Arredondada
-          border: Border.all(color: AppTheme.borderDark), // Borda fina
-        ),
-        child: Icon(icon, color: AppTheme.textSilver, size: 20),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: AppTheme.textWhite,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      hoverColor: AppTheme.primaryModern.withValues(alpha: 0.1),
-      onTap: onTap,
     );
   }
 }

@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Para Haptics
 import 'package:provider/provider.dart';
 import 'package:konta_app/core/theme/app_theme.dart';
-import 'package:konta_app/core/utils/formatters.dart';
 
-// Widgets Globais e Compartilhados
+// Widgets
 import 'package:konta_app/widgets/app_drawer.dart';
-// IMPORTANTE: Importe o Skeleton que criamos
 import 'package:konta_app/features/dashboard/presentation/widgets/dashboard_skeleton_view.dart';
-
-// Widgets do Dashboard
 import 'package:konta_app/modules/dashboard/widgets/balance_card_widget.dart';
-import 'package:konta_app/modules/dashboard/widgets/DashboardHeader.dart';
 import 'package:konta_app/modules/dashboard/widgets/pie_chart_widget.dart';
 import 'package:konta_app/modules/dashboard/widgets/RecentTransactionsList.dart';
 import 'package:konta_app/modules/dashboard/widgets/finance_summary_card.dart';
 
-// Módulos
+// Controllers & Auth
 import 'package:konta_app/modules/auth/controllers/auth_provider.dart';
 import 'package:konta_app/modules/auth/login_page.dart';
 import 'package:konta_app/modules/dashboard/controllers/dashboard_controller.dart';
@@ -26,7 +22,6 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Injeção de Dependência isolada
     return ChangeNotifierProvider(
       create: (_) => DashboardController(),
       child: const _DashboardContent(),
@@ -41,26 +36,22 @@ class _DashboardContent extends StatefulWidget {
 }
 
 class _DashboardContentState extends State<_DashboardContent> {
+  // Controle de privacidade (Olho)
+  final ValueNotifier<bool> _showValues = ValueNotifier(true);
+
   @override
   void initState() {
     super.initState();
-    // Executa após o primeiro frame para evitar erros de build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadDashboardData();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDashboardData());
   }
 
-  // Método isolado para buscar dados (Clean Code)
   Future<void> _loadDashboardData() async {
-    // Verificação de segurança: O widget ainda está na árvore?
     if (!mounted) return;
-    
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.user;
 
-    // Redirecionamento de segurança se não houver usuário
     if (user?.token == null) {
-      if (mounted) { // Check duplo por causa do async gap
+      if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const LoginPage()),
         );
@@ -69,118 +60,191 @@ class _DashboardContentState extends State<_DashboardContent> {
     }
 
     final now = DateTime.now();
-    
-    // A chamada ao provider deve ser segura
     await Provider.of<DashboardController>(context, listen: false)
         .fetchDashboard(user!.token!, mes: now.month, ano: now.year);
   }
 
   void _showAddOptions(BuildContext context) {
+    HapticFeedback.mediumImpact(); // Feedback Tátil
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border(top: BorderSide(color: AppTheme.borderDark)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: AppTheme.borderDark, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 20),
-            const Text("Adicionar Novo", style: TextStyle(color: AppTheme.textWhite, fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            
-            // Botão Receita
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: AppTheme.neonGreen.withValues(alpha: 0.1), shape: BoxShape.circle),
-                child: const Icon(Icons.arrow_upward, color: AppTheme.neonGreen),
-              ),
-              title: const Text('Nova Receita', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              subtitle: const Text('Salário, investimentos, extras...', style: TextStyle(color: AppTheme.textSilver)),
-              onTap: () {
-                Navigator.pop(context);
-                // Navegação futura aqui
-              },
-            ),
-            const Divider(color: AppTheme.borderDark),
-            
-            // Botão Despesa
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: AppTheme.neonRed.withValues(alpha: 0.1), shape: BoxShape.circle),
-                child: const Icon(Icons.arrow_downward, color: AppTheme.neonRed),
-              ),
-              title: const Text('Nova Despesa', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              subtitle: const Text('Contas, mercado, lazer...', style: TextStyle(color: AppTheme.textSilver)),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const VariableExpensesPage()));
-              },
-            ),
-          ],
-        ),
+      backgroundColor: Colors.transparent, // Transparente para ver o glass
+      builder: (context) => _buildGlassBottomSheet(context),
+    );
+  }
+
+  // BottomSheet com visual fosco (Glassmorphism)
+  Widget _buildGlassBottomSheet(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border(top: BorderSide(color: AppTheme.borderDark)),
       ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: AppTheme.textSilver.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 24),
+          const Text("Nova Movimentação", style: TextStyle(color: AppTheme.textWhite, fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 24),
+          
+          _buildActionTile(
+            context, 
+            icon: Icons.arrow_upward, 
+            color: AppTheme.neonGreen, 
+            title: "Nova Receita", 
+            subtitle: "Salário, investimentos...", 
+            onTap: () { /* Navegar */ }
+          ),
+          const Divider(color: AppTheme.borderDark, height: 32),
+          _buildActionTile(
+            context, 
+            icon: Icons.arrow_downward, 
+            color: AppTheme.neonRed, 
+            title: "Nova Despesa", 
+            subtitle: "Mercado, contas, lazer...", 
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const VariableExpensesPage()));
+            }
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionTile(BuildContext context, {required IconData icon, required Color color, required String title, required String subtitle, required VoidCallback onTap}) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+        child: Icon(icon, color: color, size: 24),
+      ),
+      title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+      subtitle: Text(subtitle, style: const TextStyle(color: AppTheme.textSilver, fontSize: 13)),
+      onTap: onTap,
+      trailing: const Icon(Icons.chevron_right, color: AppTheme.textSilver),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Listeners
     final user = Provider.of<AuthProvider>(context).user;
     final dashController = Provider.of<DashboardController>(context);
 
-    // Fail-fast para Auth
-    if (user == null) {
-      return const SizedBox(); 
-    }
+    if (user == null) return const SizedBox();
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       drawer: const AppDrawer(),
-      appBar: DashboardHeader(userName: user.nome),
       
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddOptions(context),
         backgroundColor: AppTheme.neonGreen,
-        shape: const CircleBorder(),
-        elevation: 10,
-        child: const Icon(Icons.add, color: Colors.black, size: 28),
+        elevation: 0, // Flat design
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)), // Squircle (Apple style)
+        child: const Icon(Icons.add, color: Colors.black, size: 30),
       ),
 
-      // AnimatedSwitcher
-      // Troca suavemente entre o Skeleton e o Conteúdo Real
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: dashController.isLoading
-            ? const DashboardSkeletonView() // SEU NOVO SKELETON
-            : RefreshIndicator(
-                color: AppTheme.neonGreen,
-                backgroundColor: AppTheme.surface,
-                onRefresh: _loadDashboardData, // Chama o método seguro criado acima
-                // Conteúdo extraído para manter o build limpo
-                child: _DashboardSuccessView( 
-                  controller: dashController,
-                ),
-              ),
+      // MUDANÇA PRINCIPAL: CustomScrollView
+      body: dashController.isLoading
+          ? const DashboardSkeletonView()
+          : ValueListenableBuilder<bool>(
+              valueListenable: _showValues,
+              builder: (context, showValues, child) {
+                return RefreshIndicator(
+                  color: AppTheme.neonGreen,
+                  backgroundColor: AppTheme.surface,
+                  edgeOffset: 100, // Ajuste para Sliver
+                  onRefresh: _loadDashboardData,
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(), // Efeito elástico (iOS)
+                    slivers: [
+                      // 1. App Bar que expande/contrai
+                      _buildSliverAppBar(user.nome, showValues),
+
+                      // 2. Conteúdo com Adapter
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: _DashboardBody(
+                            controller: dashController,
+                            showValues: showValues,
+                          ),
+                        ),
+                      ),
+                      
+                      // Espaço extra para o FAB não cobrir conteúdo
+                      const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+                    ],
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  SliverAppBar _buildSliverAppBar(String userName, bool showValues) {
+    final firstName = userName.split(' ')[0];
+    return SliverAppBar(
+      backgroundColor: AppTheme.background,
+      expandedHeight: 120.0,
+      floating: true,
+      pinned: true,
+      elevation: 0,
+      iconTheme: const IconThemeData(color: AppTheme.textWhite),
+      actions: [
+        // Botão de Privacidade
+        IconButton(
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            _showValues.value = !_showValues.value;
+          },
+          icon: Icon(
+            showValues ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            color: AppTheme.textSilver,
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Avatar clicável
+        Padding(
+          padding: const EdgeInsets.only(right: 20),
+          child: CircleAvatar(
+            radius: 18,
+            backgroundColor: AppTheme.inputDark,
+            child: Text(
+              firstName[0].toUpperCase(),
+              style: const TextStyle(color: AppTheme.neonGreen, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        centerTitle: false,
+        titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+        title: Text(
+          'Olá, $firstName',
+          style: const TextStyle(
+            color: AppTheme.textWhite,
+            fontWeight: FontWeight.bold,
+            fontSize: 20, // O Sliver vai animar o tamanho da fonte
+          ),
+        ),
       ),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// VIEW PRIVADA: Só desenha quando tem dados (Separation of Concerns)
-// ---------------------------------------------------------------------------
-class _DashboardSuccessView extends StatelessWidget {
+// Corpo separado para organização
+class _DashboardBody extends StatelessWidget {
   final DashboardController controller;
+  final bool showValues;
 
-  const _DashboardSuccessView({required this.controller});
+  const _DashboardBody({required this.controller, required this.showValues});
 
   @override
   Widget build(BuildContext context) {
@@ -191,65 +255,58 @@ class _DashboardSuccessView extends StatelessWidget {
     final graficos = controller.data?.graficos ?? [];
     final transacoes = controller.data?.transacoes ?? [];
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 10),
-          
-          // 1. CARD PRINCIPAL
-          BalanceCardWidget(
-            saldoTotal: saldo,
-            receitasMes: receitas,
-            despesasMes: despesas,
-          ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 10),
+        
+        // Passamos o estado de privacidade para os widgets
+        BalanceCardWidget(
+          saldoTotal: saldo,
+          receitasMes: receitas,
+          despesasMes: despesas,
+          showValues: showValues, // Atualize o widget para aceitar isso
+        ),
 
-          const SizedBox(height: 24),
+        const SizedBox(height: 24),
 
-          // 2. CARDS DE RESUMO
-          Row(
-            children: [
-              Expanded(
-                child: FinanceSummaryCard(
-                  title: 'Entradas',
-                  value: Formatters.formatMoney(receitas),
-                  icon: Icons.arrow_upward_rounded,
-                  color: AppTheme.neonGreen,
-                ),
+        Row(
+          children: [
+            Expanded(
+              child: FinanceSummaryCard(
+                title: 'Entradas',
+                value: receitas,
+                icon: Icons.arrow_upward_rounded,
+                color: AppTheme.neonGreen,
+                showValues: showValues,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: FinanceSummaryCard(
-                  title: 'Saídas',
-                  value: Formatters.formatMoney(despesas),
-                  icon: Icons.arrow_downward_rounded,
-                  color: AppTheme.neonRed,
-                ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: FinanceSummaryCard(
+                title: 'Saídas',
+                value: despesas,
+                icon: Icons.arrow_downward_rounded,
+                color: AppTheme.neonRed,
+                showValues: showValues,
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
 
-          const SizedBox(height: 32),
+        const SizedBox(height: 32),
 
-          // 3. GRÁFICO
-          if (graficos.isNotEmpty)
-            PieChartWidget(dados: graficos),
+        if (graficos.isNotEmpty)
+          PieChartWidget(dados: graficos),
 
-          const SizedBox(height: 32),
+        const SizedBox(height: 32),
 
-          // 4. LISTA DE TRANSAÇÕES
-          RecentTransactionsList(
-            transactions: transacoes,
-            onViewAllTap: () {
-              // Navegar para extrato
-            },
-          ),
-          
-          const SizedBox(height: 80),
-        ],
-      ),
+        RecentTransactionsList(
+          transactions: transacoes,
+          showValues: showValues, 
+          onViewAllTap: () {},
+        ),
+      ],
     );
   }
 }

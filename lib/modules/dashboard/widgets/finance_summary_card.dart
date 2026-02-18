@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:konta_app/core/theme/app_theme.dart';
+import 'package:konta_app/core/utils/formatters.dart';
 
 class FinanceSummaryCard extends StatelessWidget {
   final String title;
-  final String value;
+  final double value; // Mudou de String para double
   final IconData icon;
   final Color color;
+  final bool showValues; // Novo parâmetro obrigatório
 
   const FinanceSummaryCard({
     super.key,
@@ -13,6 +15,7 @@ class FinanceSummaryCard extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
+    required this.showValues, // Obrigatório
   });
 
   @override
@@ -80,17 +83,33 @@ class FinanceSummaryCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                // Valor
+                
+                // Valor com Animação de Privacidade
                 FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text(
-                    value,
-                    style: TextStyle(
-                      color: color, // Usa a cor para o valor também
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
-                    ),
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: showValues
+                        ? Text(
+                            Formatters.formatMoney(value), // Formata aqui dentro
+                            key: ValueKey('value_${value}'),
+                            style: TextStyle(
+                              color: color, 
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
+                            ),
+                          )
+                        : Container(
+                            key: const ValueKey('hidden'),
+                            height: 24,
+                            width: 80,
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
                   ),
                 ),
               ],
