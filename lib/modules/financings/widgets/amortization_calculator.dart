@@ -1,8 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:konta_app/core/theme/app_theme.dart';
+import 'package:konta_app/core/utils/konta_snack.dart';
 import 'package:konta_app/data/models/financing_model.dart';
+import 'package:konta_app/modules/auth/controllers/auth_provider.dart';
+import 'package:konta_app/modules/financings/controllers/financing_controller.dart';
 
 class AmortizationCalculatorWidget extends StatefulWidget {
   final Financing financing;
@@ -25,22 +29,20 @@ class _AmortizationCalculatorWidgetState extends State<AmortizationCalculatorWid
     final f = widget.financing;
     final monthlyRate = f.interestRate / 100;
     final remaining = f.totalInstallments - f.paidInstallments;
-    final currentTotalInterest = (f.monthlyPayment * remaining) - f.remainingAmount;
+    final currentTotalInterest = (f.currentInstallmentValue * remaining) - f.remainingAmount;
     final newRemaining = f.remainingAmount - extra;
     
-    // Cálculo simplificado de amortização (SAC/Price misto para estimativa)
-    // pmt = PV * i / (1 - (1+i)^-n) -> isolando n
-    final pmtFactor = (newRemaining * monthlyRate) / f.monthlyPayment;
+    final pmtFactor = (newRemaining * monthlyRate) / f.currentInstallmentValue;
 
     int newInstallments;
     if (pmtFactor >= 1 || newRemaining <= 0) {
-      newInstallments = 0; // Quitado ou inválido
+      newInstallments = 0; 
     } else {
       newInstallments = (-log(1 - pmtFactor) / log(1 + monthlyRate)).ceil();
     }
 
     final monthsReduced = remaining - newInstallments;
-    final newTotalPayment = newInstallments * f.monthlyPayment;
+    final newTotalPayment = newInstallments * f.currentInstallmentValue;
     final newTotalInterest = newTotalPayment - newRemaining;
     final interestSaved = currentTotalInterest - newTotalInterest;
     
@@ -52,8 +54,33 @@ class _AmortizationCalculatorWidgetState extends State<AmortizationCalculatorWid
         'interestSaved': interestSaved > 0 ? interestSaved : 0.0,
         'newEndDate': newEndDate,
         'newRemainingAmount': newRemaining > 0 ? newRemaining : 0.0,
+        'amortizationValue': extra, // Guardar valor para envio
       };
     });
+  }
+
+  Future<void> _executeAmortization() async {
+    if (_result == null) return;
+    
+    final controller = Provider.of<FinancingController>(context, listen: false);
+    final user = Provider.of<AuthProvider>(context, listen: false).user;
+    
+    if (user == null) return;
+
+    final success = await controller.amortize(
+      user.token!, 
+      user.id, 
+      widget.financing.id, 
+      _result!['amortizationValue']
+    );
+
+    if (success && mounted) {
+      KontaSnack.show(context, title: "Sucesso", message: "Amortização realizada!");
+      _controller.clear();
+      setState(() => _result = null);
+    } else if (mounted) {
+      KontaSnack.show(context, type: KontaSnackType.error, title: "Erro", message: controller.error ?? "Erro ao amortizar");
+    }
   }
 
   @override
@@ -117,7 +144,7 @@ class _AmortizationCalculatorWidgetState extends State<AmortizationCalculatorWid
           if (_result != null) ...[
             const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(12), // Padding aumentado para conter botão
               decoration: BoxDecoration(
                 color: AppTheme.inputDark,
                 borderRadius: BorderRadius.circular(16),
@@ -146,18 +173,27 @@ class _AmortizationCalculatorWidgetState extends State<AmortizationCalculatorWid
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  const Divider(color: AppTheme.borderDark),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Nova previsão de quitação:', style: TextStyle(fontSize: 12, color: AppTheme.textSilver)),
-                      Text(
-                        DateFormat('MMMM yyyy', 'pt_BR').format(_result!['newEndDate']).toUpperCase(),
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textWhite),
-                      ),
-                    ],
+                  const SizedBox(height: 16),
+                  
+                  // Botão Confirmar Amortização
+                  SizedBox(
+                    width: double.infinity,
+                    child: Consumer<FinancingController>(
+                      builder: (context, controller, _) {
+                        return ElevatedButton(
+                          onPressed: controller.isLoading ? null : _executeAmortization,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.neonGreen.withOpacity(0.2),
+                            foregroundColor: AppTheme.neonGreen,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                          ),
+                          child: controller.isLoading 
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Text("EFETIVAR PAGAMENTO"),
+                        );
+                      }
+                    ),
                   )
                 ],
               ),

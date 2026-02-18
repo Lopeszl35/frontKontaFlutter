@@ -4,7 +4,7 @@ class ShimmerLoading extends StatefulWidget {
   final Widget child;
   final bool isLoading;
   
-  // Cores ajustadas para Dark Mode (Baseado no seu SkeletonContainer)
+
   final Color baseColor;
   final Color highlightColor;
 
@@ -12,9 +12,7 @@ class ShimmerLoading extends StatefulWidget {
     super.key,
     required this.child,
     this.isLoading = true,
-    // Base transparente, quase invisível
     this.baseColor = const Color(0xFF2A2A2A), 
-    // O brilho que passa (mais claro)
     this.highlightColor = const Color(0xFF505050), 
   });
 
@@ -57,14 +55,14 @@ class _ShimmerLoadingState extends State<ShimmerLoading> with SingleTickerProvid
       animation: _animation,
       builder: (context, child) {
         return ShaderMask(
-          blendMode: BlendMode.srcATop, // O SEGREDO: Só pinta onde tem conteúdo no child
+          blendMode: BlendMode.srcATop,
           shaderCallback: (bounds) {
             return LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
               colors: [
                 widget.baseColor,
-                widget.highlightColor, // O brilho no meio
+                widget.highlightColor, 
                 widget.baseColor,
               ],
               stops: const [
@@ -72,7 +70,6 @@ class _ShimmerLoadingState extends State<ShimmerLoading> with SingleTickerProvid
                 0.5,
                 0.9,
               ],
-              // Move o gradiente baseado na animação
               transform: _SlidingGradientTransform(percent: _animation.value),
             ).createShader(bounds);
           },

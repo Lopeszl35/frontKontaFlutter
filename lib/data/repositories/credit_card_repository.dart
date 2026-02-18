@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:konta_app/core/config/env.dart'; 
 import 'package:konta_app/data/models/credit_card_model.dart';
-// Importe o novo utilitário
 import 'package:konta_app/core/utils/api_error_handler.dart';
 
 class CreditCardRepository {

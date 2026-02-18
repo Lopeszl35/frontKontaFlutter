@@ -1,6 +1,6 @@
 name: konta_app
 description: "App de gestão financeira pessoal Konta."
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
@@ -15,6 +15,7 @@ dependencies:
   http: ^1.6.0
   flutter_dotenv: ^5.1.0
   fl_chart: ^1.0.0
+  google_mobile_ads: ^7.0.0
 
 # Para fazer requisições HTTP (GET, POST) na API
 dio: ^5.4.0
@@ -25,7 +26,7 @@ intl: ^0.19.0
 # Gerenciamento de estado e injeção de dependência simples
 provider: ^6.1.1
 
-# Ícones modernos (opcional, mas ajuda na UI)
+
 lucide_icons: ^0.2.0
 
 # Gráficos para o Dashboard

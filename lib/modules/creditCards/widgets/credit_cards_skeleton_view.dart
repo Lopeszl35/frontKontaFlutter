@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:konta_app/widgets/skeleton_container.dart';
 import 'package:konta_app/widgets/shimmer_loading.dart';
-import 'package:konta_app/core/theme/app_theme.dart';
 
 class CreditCardsSkeletonView extends StatelessWidget {
   const CreditCardsSkeletonView({super.key});

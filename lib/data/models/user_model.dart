@@ -21,7 +21,7 @@ class UserModel {
     this.planType = 'free', 
   });
 
-  // Getters inteligentes para facilitar a lógica na UI (Clean Code)
+ 
   bool get isPremium => planType == 'premium' || planType == 'founder';
   bool get isFree => planType == 'free';
 

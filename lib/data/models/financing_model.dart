@@ -1,37 +1,118 @@
-class Financing {
-  final String id;
-  final String name;
-  final String type; 
-  final double totalAmount;
-  final double remainingAmount;
-  final double monthlyPayment;
-  final double interestRate;
-  final int totalInstallments;
-  final int paidInstallments;
-  final String startDate;
-  final String bank;
+import 'package:intl/intl.dart';
 
-  const Financing({
-    required this.id,
-    required this.name,
-    required this.type,
-    required this.totalAmount,
-    required this.remainingAmount,
-    required this.monthlyPayment,
-    required this.interestRate,
-    required this.totalInstallments,
-    required this.paidInstallments,
-    required this.startDate,
-    required this.bank,
+class FinancingSummary {
+  final double totalDebt;
+  final double totalMonthly;
+  final double avgRate;
+
+  FinancingSummary({
+    required this.totalDebt,
+    required this.totalMonthly,
+    required this.avgRate,
   });
 
-  int get remainingInstallments => totalInstallments - paidInstallments;
-  double get progress => totalInstallments > 0 ? (paidInstallments / totalInstallments) : 0.0;
+  factory FinancingSummary.fromJson(Map<String, dynamic> json) {
+    return FinancingSummary(
+      totalDebt: _parseDouble(json['dividaTotal']),
+      totalMonthly: _parseDouble(json['parcelaTotal']),
+      avgRate: _parseDouble(json['taxaMedia']),
+    );
+  }
 }
 
-// Mock Data
-final List<Financing> mockFinancings = [
-  const Financing(id: '1', name: 'Honda Civic 2023', type: 'vehicle', totalAmount: 120000, remainingAmount: 78000, monthlyPayment: 2850, interestRate: 1.29, totalInstallments: 48, paidInstallments: 15, startDate: '2024-10-01', bank: 'Banco Honda'),
-  const Financing(id: '2', name: 'Apartamento Centro', type: 'property', totalAmount: 450000, remainingAmount: 380000, monthlyPayment: 3200, interestRate: 0.85, totalInstallments: 360, paidInstallments: 24, startDate: '2024-01-15', bank: 'Caixa Econômica'),
-  const Financing(id: '3', name: 'Empréstimo Reforma', type: 'personal', totalAmount: 50000, remainingAmount: 35000, monthlyPayment: 1800, interestRate: 1.99, totalInstallments: 36, paidInstallments: 10, startDate: '2025-03-01', bank: 'Nubank'),
-];
+class FinancingParcel {
+  final int id;
+  final int number;
+  final DateTime? dueDate;
+  final double value;
+  final double amortization;
+  final double interest;
+  final String status; // 'aberta', 'paga'
+
+  FinancingParcel({
+    required this.id,
+    required this.number,
+    this.dueDate,
+    required this.value,
+    required this.amortization,
+    required this.interest,
+    required this.status,
+  });
+
+  factory FinancingParcel.fromJson(Map<String, dynamic> json) {
+    return FinancingParcel(
+      id: json['idParcela'] ?? 0,
+      number: json['numeroParcela'] ?? 0,
+      dueDate: json['dataVencimento'] != null ? DateTime.tryParse(json['dataVencimento']) : null,
+      value: _parseDouble(json['valor']),
+      amortization: _parseDouble(json['valorAmortizacao']),
+      interest: _parseDouble(json['valorJuros']),
+      status: json['status'] ?? 'aberta',
+    );
+  }
+}
+
+class Financing {
+  final int id;
+  final String title;
+  final String institution;
+  final double totalAmount;
+  final double remainingAmount;
+  final int totalInstallments;
+  final int paidInstallments;
+  final double interestRate;
+  final String system; // PRICE, SAC
+  final DateTime? startDate;
+  final double currentInstallmentValue;
+  final DateTime? nextDueDate;
+  final List<FinancingParcel> parcels;
+
+  Financing({
+    required this.id,
+    required this.title,
+    required this.institution,
+    required this.totalAmount,
+    required this.remainingAmount,
+    required this.totalInstallments,
+    required this.paidInstallments,
+    required this.interestRate,
+    required this.system,
+    this.startDate,
+    required this.currentInstallmentValue,
+    this.nextDueDate,
+    this.parcels = const [],
+  });
+
+  // Getters para UI
+  double get progress => totalAmount > 0 ? (totalAmount - remainingAmount) / totalAmount : 0.0;
+  int get remainingInstallments => totalInstallments - paidInstallments;
+
+  factory Financing.fromJson(Map<String, dynamic> json) {
+    var list = json['parcelas'] as List? ?? [];
+    List<FinancingParcel> parcelList = list.map((i) => FinancingParcel.fromJson(i)).toList();
+
+    return Financing(
+      id: json['idFinanciamento'] ?? 0,
+      title: json['titulo'] ?? 'Financiamento',
+      institution: json['instituicao'] ?? '',
+      totalAmount: _parseDouble(json['valorTotal']),
+      remainingAmount: _parseDouble(json['valorRestante']),
+      totalInstallments: json['numeroParcelas'] ?? 0,
+      paidInstallments: json['parcelasPagas'] ?? 0,
+      interestRate: _parseDouble(json['taxaJurosMensal']),
+      system: json['sistemaAmortizacao'] ?? 'PRICE',
+      startDate: json['dataInicio'] != null ? DateTime.tryParse(json['dataInicio']) : null,
+      currentInstallmentValue: _parseDouble(json['valorParcelaAtual']),
+      nextDueDate: json['proximoVencimento'] != null ? DateTime.tryParse(json['proximoVencimento']) : null,
+      parcels: parcelList,
+    );
+  }
+}
+
+// Helper seguro para converter String/Num para Double
+double _parseDouble(dynamic value) {
+  if (value == null) return 0.0;
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0.0;
+  return 0.0;
+}
