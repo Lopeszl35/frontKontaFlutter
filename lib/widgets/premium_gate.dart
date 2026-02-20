@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:konta_app/modules/auth/controllers/auth_provider.dart';
-import 'package:konta_app/core/theme/app_theme.dart';
 
 class PremiumGate extends StatelessWidget {
   final Widget child;

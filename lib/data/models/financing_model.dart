@@ -1,5 +1,3 @@
-import 'package:intl/intl.dart';
-
 class FinancingSummary {
   final double totalDebt;
   final double totalMonthly;

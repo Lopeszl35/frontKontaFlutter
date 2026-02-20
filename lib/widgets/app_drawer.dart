@@ -7,6 +7,8 @@ import 'package:konta_app/modules/dashboard/pages/dashboard_page.dart';
 import 'package:konta_app/modules/expenses/pages/variable_expenses_page.dart';
 import 'package:konta_app/modules/creditCards/pages/credit_cards_screen.dart';
 import 'package:konta_app/modules/financings/pages/financings_screen.dart';
+import 'package:konta_app/modules/expenses/pages/fixed_expenses_page.dart';
+import 'package:konta_app/modules/reminders/pages/payment_reminders_page.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -14,7 +16,7 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
-    final version = "v1.0.0 (Beta)"; // Idealmente viria do package_info_plus
+    const version = "v1.0.0 (Beta)"; // Idealmente viria do package_info_plus
 
     return Drawer(
       backgroundColor: AppTheme.background, // Fundo escuro total para imersão
@@ -47,6 +49,14 @@ class AppDrawer extends StatelessWidget {
                   color: AppTheme.neonOrange,
                   onTap: () => _navigate(context, const VariableExpensesPage()),
                 ),
+
+                 _buildMenuItem(
+                  context,
+                  icon: Icons.event_repeat_outlined,
+                  title: "Lembretes de Pagamento",
+                  color: Colors.deepOrange,
+                  onTap: () => _navigate(context, const PaymentRemindersPage()),
+                ),
                 
                 _buildMenuItem(
                   context,
@@ -73,6 +83,14 @@ class AppDrawer extends StatelessWidget {
                   title: "Cartões de Crédito",
                   color: Colors.purpleAccent,
                   onTap: () => _navigate(context, const CreditCardsScreen()),
+                ),
+
+                _buildMenuItem(
+                  context,
+                  icon: Icons.event_repeat_outlined,
+                  title: "Gastos Fixos",
+                  color: Colors.deepOrange,
+                  onTap: () => _navigate(context, const FixedExpensesPage()),
                 ),
 
                 const SizedBox(height: 24),
@@ -129,7 +147,7 @@ class AppDrawer extends StatelessWidget {
           // Avatar com Borda Gradiente
           Container(
             padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
               gradient: AppTheme.premiumGradient, // Borda premium
             ),
