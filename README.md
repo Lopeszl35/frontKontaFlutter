@@ -99,4 +99,4 @@ Adotamos o **Nexor Standard**:
 **Copyright © 2026 Nexor. Todos os direitos reservados.**
 
 Este é um software **PROPRIETÁRIO** e de código fechado (*Closed Source*). 
-O código-fonte, design, arquitetura e lógicas de negócios aqui presentes pertencem exclusivamente à **Nexor**. É estritamente proibida a cópia, modificação, distribuição, licenciamento ou uso comercial de qualquer parte deste repositório sem a autorização prévia e expressa por escrito.
+O código-fonte, design, arquitetura e lógicas de negócios aqui presentes pertencem exclusivamente à **Nexor** e de seu proprietário Rafael Amaro Lopes. É estritamente proibida a cópia, modificação, distribuição, licenciamento ou uso comercial de qualquer parte deste repositório sem a autorização prévia e expressa por escrito.
