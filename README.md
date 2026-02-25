@@ -1,9 +1,4 @@
-diff --git a/README.md b/README.md
-index 758eaf7f8e2053d36de00cd063ce1d8962e04e40..4acdb4c3d344750908f40abddab0d75d5180d44d 100644
---- a/README.md
-+++ b/README.md
-@@ -1,16 +1,177 @@
--# konta_app
+
 +<div align="center">
  
 -A new Flutter project.
