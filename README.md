@@ -1,187 +1,102 @@
+<div align="center">
 
-+<div align="center">
- 
--A new Flutter project.
-+# **Konta by Nexor** 📱
- 
--## Getting Started
-+### **Seu Cérebro Financeiro para decisões inteligentes hoje e previsões seguras para amanhã.** 🧠📈🔮
- 
--This project is a starting point for a Flutter application.
-+![Flutter](https://img.shields.io/badge/Flutter-Mobile-blue?logo=flutter)
-+![Node.js](https://img.shields.io/badge/Node.js-Backend-3C873A?logo=node.js&logoColor=white)
-+![Proprietary](https://img.shields.io/badge/License-Proprietary-red)
-+![AI Ready](https://img.shields.io/badge/Status-AI--Ready-8A2BE2)
- 
--A few resources to get you started if this is your first Flutter project:
-+</div>
- 
--- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
--- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-+---
- 
--For help getting started with Flutter development, view the
--[online documentation](https://docs.flutter.dev/), which offers tutorials,
--samples, guidance on mobile development, and a full API reference.
-+## Sobre o Projeto
-+
-+O **Konta** é um aplicativo mobile de **gestão financeira pessoal** criado pela **Nexor** para atuar como um hub centralizador da vida financeira do usuário. Em vez de apenas registrar gastos passados, o produto foi concebido para evoluir o comportamento financeiro para um modelo **proativo e orientado a decisão**.
-+
-+### O que o Konta é
-+- Um **Personal Finance Aggregator** com foco em visão consolidada, clareza operacional e inteligência financeira.
-+- Uma plataforma com design e experiência premium no padrão **Dark Tech / Fintech Premium**.
-+- Uma base tecnológica preparada para IA preditiva e prescritiva.
-+
-+### O que o Konta não é
-+- ❌ **Não é banco digital transacional**.
-+- ❌ **Não é custodiante de dinheiro**.
-+- ✅ O foco é **inteligência, gestão e consolidação de dados financeiros** para apoiar decisões melhores.
-+
-+---
-+
-+## Visão da IA (O Futuro do Konta) 🧠🔮
-+
-+O roadmap do Konta é centrado em uma **IA Gestora Financeira** com capacidade:
-+
-+1. **Preditiva** (forecast): antecipar cenários de fluxo de caixa.
-+2. **Prescritiva** (decisioning): recomendar ações concretas para manter saúde financeira.
-+
-+### Como a IA vai atuar
-+
-+- **Análise do passado** 📉  
-+  Identifica padrões de consumo, sazonalidade e desperdícios para sugerir otimizações práticas no orçamento.
-+
-+- **Simulação do futuro** 📈  
-+  Projeta impacto de novos compromissos financeiros nos próximos meses, considerando despesas fixas, variáveis, faturas, financiamentos e obrigações futuras.
-+
-+- **Exemplo real de decisão (caso do tênis)** 👟  
-+  Se o usuário quiser comprar um tênis parcelado, a IA simulará o fluxo de caixa dos próximos meses e responderá de forma objetiva se:
-+  - a compra é absorvível com segurança;
-+  - o orçamento ficará apertado;
-+  - haverá risco de saldo negativo/atrasos;
-+  - qual alternativa é mais saudável (adiar, reduzir parcela, ajustar categoria de gasto etc.).
-+
-+> **Diretriz de engenharia da Nexor:** IA confiável depende de dados confiáveis. O Konta está sendo arquitetado desde o dia 1 para evitar o problema clássico de *"garbage in, garbage out"*.
-+
-+---
-+
-+## Features Atuais
-+
-+O app já possui módulos estruturados para operação financeira do dia a dia:
-+
-+- **Dashboard Premium** 📊
-+  - visão consolidada de receitas, despesas e saldo;
-+  - gráficos e cards estratégicos;
-+  - rolagem fluida com **SliverAppBar**;
-+  - **Privacy Mode** para ocultação de valores;
-+  - feedback tátil (**Haptics**) em ações-chave.
-+
-+- **Gestão de Financiamentos** 🏦
-+  - cadastro e acompanhamento de contratos;
-+  - simulação e execução de amortização;
-+  - histórico de parcelas e status operacional.
-+
-+- **Gastos Fixos** 🧾
-+  - controle de contas recorrentes;
-+  - categorização semântica por cor;
-+  - suporte a monitoramento de vencimentos.
-+
-+- **Lembretes de Pagamento (Fiados/Prazos)** ⏰
-+  - controle de obrigações fora do cartão;
-+  - fluxo de cadastro/edição para compromissos a prazo.
-+
-+- **Cartões de Crédito e Gastos Variáveis** 💳
-+  - gestão de cartões e despesas por cartão;
-+  - visão de fatura e resumo mensal;
-+  - controle detalhado de despesas variáveis.
-+
-+- **Autenticação e Sessão** 🔐
-+  - fluxo de login/cadastro;
-+  - gerenciamento de estado de autenticação;
-+  - base pronta para armazenamento seguro de token.
-+
-+---
-+
-+## Arquitetura e Padrões (The Nexor Standard) 🏗️
-+
-+A fundação de engenharia do Konta é orientada à robustez, previsibilidade e evolução:
-+
-+- **Frontend em Flutter/Dart** com foco em UI escalável e alta consistência visual.
-+- **Gerenciamento de estado com Provider**, respeitando separação de responsabilidades entre camada de apresentação, controladores e acesso a dados.
-+- **Camada de dados tipada** com modelos explícitos para contratos previsíveis.
-+- **Repositórios dedicados por domínio** para encapsular comunicação com API e reduzir acoplamento.
-+- **Princípios aplicados:**
-+  - **Clean Architecture (adaptada ao contexto do produto)**
-+  - **SOLID**
-+  - **DRY**
-+  - **Separation of Concerns estrita**
-+- **Preparação para IA:** modelagem e contratos padronizados para ingestão analítica futura com baixa entropia de dados.
-+
-+### Diretrizes de qualidade e segurança
-+
-+- Tipagem forte e validação de payloads.
-+- Configuração por ambiente (`.env`) com proteção para builds release.
-+- Estrutura favorável à testabilidade e evolução incremental dos módulos.
-+
-+---
-+
-+## Tecnologias Utilizadas
-+
-+| Camada | Stack |
-+|---|---|
-+| Mobile App | Flutter (Dart) |
-+| Gerenciamento de Estado | Provider |
-+| UI Data Visualization | fl_chart |
-+| Comunicação HTTP | http, Dio |
-+| Configuração de Ambiente | flutter_dotenv |
-+| Internacionalização | intl |
-+| Ads/Monetização | google_mobile_ads |
-+| Backend (ecossistema Nexor) | Node.js + Express + express-validator |
-+
-+---
-+
-+## Identidade Visual e UX/UI 🎨
-+
-+O Konta adota linguagem visual executiva e tecnológica:
-+
-+- **Design System:** Dark Tech / Fintech Premium.
-+- **Tema nativo escuro** com contraste otimizado.
-+- **Paleta de destaque Neon:** Verde, Azul, Laranja, Roxo e Vermelho.
-+- **Glassmorphism**, superfícies premium e bordas arredondadas (squircle / Material 3 / iOS-like).
-+- **Microinterações e Haptics** para reforçar confiança de uso.
-+
-+---
-+
-+## Screenshots / Previews
-+
-+> em processo de construção: Futuramente susbstituir as URLs pelos assets oficiais de produto (App Store / Play Store / Press Kit).
-+
-+<table>
-+  <tr>
-+    <td><img src="https://via.placeholder.com/360x780/0B0F14/00E676?text=Dashboard+Premium" alt="Dashboard Premium" /></td>
-+    <td><img src="https://via.placeholder.com/360x780/0B0F14/2979FF?text=Cartoes+de+Credito" alt="Cartões de Crédito" /></td>
-+  </tr>
-+  <tr>
-+    <td><img src="https://via.placeholder.com/360x780/0B0F14/FFAB00?text=Gastos+Fixos" alt="Gastos Fixos" /></td>
-+    <td><img src="https://via.placeholder.com/360x780/0B0F14/8A2BE2?text=Nexo+AI+Roadmap" alt="Nexo AI Roadmap" /></td>
-+  </tr>
-+</table>
-+
-+![Preview 1](https://via.placeholder.com/1280x720/0B0F14/00E676?text=Konta+Preview+01)
-+![Preview 2](https://via.placeholder.com/1280x720/0B0F14/FF5252?text=Konta+Preview+02)
-+
-+---
-+
-+## Licença e Propriedade 🔒
-+
-+**© Nexor — Todos os direitos reservados.**
-+
-+Este software é **PROPRIETÁRIO e FECHADO (Closed Source)**.  
-+O código-fonte, design, arquitetura, marca e demais ativos intelectuais do **Konta** pertencem exclusivamente à **Nexor**.
-+
-+### Restrições
-+
-+- É **proibida** a cópia, redistribuição, modificação, engenharia reversa ou uso comercial sem autorização formal e expressa da Nexor.
-+- Não há concessão de licença de uso de código para terceiros fora dos termos contratuais definidos pela empresa.
-+
-+Para licenciamento corporativo, parcerias estratégicas ou uso institucional, contate oficialmente a **Nexor**.
+# ✦ KONTA ✦
+### by Nexor
+
+**O seu Cérebro Financeiro Pessoal.** <br>
+*Da anotação reativa à inteligência proativa.*
+
+[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](#)
+[![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)](#)
+[![AI-Ready](https://img.shields.io/badge/AI_Ready-8B5CF6?style=for-the-badge&logo=openai&logoColor=white)](#)
+[![Proprietary](https://img.shields.io/badge/License-Proprietary-EF4444?style=for-the-badge&logo=law&logoColor=white)](#)
+
+</div>
+
+---
+
+## 📱 Sobre o Projeto
+
+O **Konta** é um agregador e gestor financeiro pessoal de padrão executivo. Projetado para fugir do estigma de planilhas complexas ou aplicativos infantis, o Konta entrega uma experiência *Fintech Premium*. 
+
+**O que o Konta é:** Um hub centralizador de informações. Um Cérebro Financeiro projetado para otimizar o patrimônio do usuário e prever cenários, levando-o de um estado *reativo* (apenas registrar o que já foi gasto) para um estado *proativo* (tomar decisões baseadas em dados).
+
+**O que o Konta não é:** Não somos uma instituição bancária transacional. O aplicativo não guarda o dinheiro, ele **gerencia a inteligência** por trás do dinheiro.
+
+---
+
+## 🧠 A Visão de IA: O Cérebro Financeiro
+
+O verdadeiro núcleo do Konta (em desenvolvimento) é sua **Inteligência Artificial Preditiva e Prescritiva**. O aplicativo está sendo estruturado desde o dia zero para alimentar um motor de IA que atuará como um *Wealth Manager* (Gestor de Patrimônio) de bolso.
+
+* **Análise Comportamental (Passado):** A IA entende os padrões de consumo, identifica gargalos invisíveis e sugere otimizações automáticas de orçamento.
+* **Simulação de Impacto (Futuro):** O usuário poderá consultar a IA antes de tomar decisões financeiras. 
+  * *Exemplo Prático:* O usuário pergunta: *"Quero comprar um tênis de R$ 1.200 parcelado em 6x. Como isso afeta meu bolso?"*. A IA analisa o fluxo de caixa futuro, os gastos fixos projetados e as faturas abertas, respondendo instantaneamente se a compra manterá a saúde financeira ou se deixará o usuário no vermelho nos próximos meses.
+
+---
+
+## ⚡ Features Principais
+
+O ecossistema do Konta é composto por módulos altamente especializados:
+
+* 📈 **Dashboard Premium:** Visão panorâmica do fluxo de caixa, cards de saldo de alto contraste (Superávit/Déficit), gráficos de distribuição de gastos e física de rolagem nativa (*SliverAppBars*) com **Privacy Mode** (ocultação de valores com um toque).
+* 🏠 **Gestão de Financiamentos:** Acompanhamento de contratos de longo prazo (imóveis, veículos), simulação de amortizações e impacto de redução de juros.
+* 📅 **Gastos Fixos:** Central de controle de contas recorrentes e assinaturas, categorizadas semanticamente por cores e integradas ao calendário de vencimentos.
+* 🤝 **Lembretes de Pagamento:** Gestão inteligente de contas a prazo, fiados e acordos interpessoais (pagamentos via PIX ou dinheiro).
+* 💳 **Cartões de Crédito:** Controle granular das faturas, limites e despesas rotativas do dia a dia.
+
+---
+
+## 🏛️ Arquitetura e Padrões (The Nexor Standard)
+
+A robustez da engenharia do Konta não é um capricho, é uma necessidade. Para que a IA preditiva funcione com precisão, evitamos a todo custo o conceito de *"Garbage in, Garbage out"* (Lixo entra, lixo sai). 
+
+Adotamos o **Nexor Standard**:
+* **Clean Architecture & SOLID:** Separação estrita de responsabilidades.
+* **Tipagem Forte e DTOs:** Nada de variáveis dinâmicas. Os contratos de dados entre Frontend e Backend são blindados, garantindo que a base de dados seja limpa e perfeita para o treinamento e consumo da IA.
+* **UI Passiva ("Burra"):** A camada de interface apenas reage. Toda a lógica de negócios, cálculos de fluxo de caixa e formatações habitam os `Controllers` e `Services`.
+* **Defensive Programming:** Tratamento extensivo de *Unhappy Paths*, Null Safety rigoroso e uso do `ApiErrorHandler` para feedbacks precisos ao usuário.
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+| Camada | Tecnologia / Padrão |
+| :--- | :--- |
+| **Mobile (Frontend)** | Flutter, Dart |
+| **State Management** | Provider |
+| **Backend (API)** | Node.js, Express |
+| **Segurança & Validação** | Express-Validator, JWT |
+| **Design System** | Material 3 / iOS Design (Glassmorphism, Squircles, Neon Accents, Haptic Feedback) |
+
+---
+
+## 🖼️ Previews da Interface
+
+<p align="center">
+  <i>O design adota o estilo "Dark Tech", focado em usabilidade noturna, alto contraste e elementos neon.</i>
+</p>
+
+<table align="center">
+  <tr>
+    <td align="center"><b>Dashboard (Privacy Mode)</b></td>
+    <td align="center"><b>Gastos Fixos</b></td>
+    <td align="center"><b>Financiamentos</b></td>
+  </tr>
+  <tr>
+    <td><img src="https://via.placeholder.com/250x500/1A1D27/6C63FF?text=Dashboard+Preview" alt="Dashboard" width="250"/></td>
+    <td><img src="https://via.placeholder.com/250x500/1A1D27/10B981?text=Gastos+Fixos+Preview" alt="Gastos Fixos" width="250"/></td>
+    <td><img src="https://via.placeholder.com/250x500/1A1D27/F59E0B?text=Financiamentos+Preview" alt="Financiamentos" width="250"/></td>
+  </tr>
+</table>
+
+*(Nota: Substituir as imagens de placeholder pelos screenshots reais do aplicativo).*
+
+---
+
+## 🔒 Licença e Propriedade
+
+**Copyright © 2026 Nexor. Todos os direitos reservados.**
+
+Este é um software **PROPRIETÁRIO** e de código fechado (*Closed Source*). 
+O código-fonte, design, arquitetura e lógicas de negócios aqui presentes pertencem exclusivamente à **Nexor**. É estritamente proibida a cópia, modificação, distribuição, licenciamento ou uso comercial de qualquer parte deste repositório sem a autorização prévia e expressa por escrito.
